@@ -1,12 +1,12 @@
 """
     :codeauthor: Jayesh Kariya <jayeshk@saltstack.com>
 """
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
-
 import salt.states.mysql_user as mysql_user
 import salt.utils.data
-from tests.support.mock import MagicMock, patch
 
 
 @pytest.fixture
@@ -93,9 +93,7 @@ def test_present():
 
                 with patch.dict(mysql_user.__opts__, {"test": False}):
                     comt = "Password for user frank@localhost has been changed"
-                    ret.update(
-                        {"comment": comt, "result": True, "changes": {name: "Updated"}}
-                    )
+                    ret.update({"comment": comt, "result": True, "changes": {name: "Updated"}})
                     assert mysql_user.present(name, password=password) == ret
 
 
@@ -141,9 +139,6 @@ def test_absent():
                 assert mysql_user.absent(name) == ret
 
             with patch.object(mysql_user, "_get_mysql_error", mock_none):
-                comt = (
-                    "User frank_exampledb@localhost is not present,"
-                    " so it cannot be removed"
-                )
+                comt = "User frank_exampledb@localhost is not present, so it cannot be removed"
                 ret.update({"comment": comt, "result": True, "changes": {}})
                 assert mysql_user.absent(name) == ret

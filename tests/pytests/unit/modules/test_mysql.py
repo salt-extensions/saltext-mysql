@@ -5,14 +5,14 @@
     tests.unit.modules.mysql
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
-
-
 import logging
+from unittest.mock import call
+from unittest.mock import MagicMock
+from unittest.mock import mock_open
+from unittest.mock import patch
 
 import pytest
-
 import salt.modules.mysql as mysql
-from tests.support.mock import MagicMock, call, mock_open, patch
 
 try:
     import pymysql
@@ -72,9 +72,7 @@ __all_privileges__ = [
 
 pytestmark = [
     pytest.mark.slow_test,
-    pytest.mark.skipif(
-        mysql.MySQLdb is None, reason="No python mysql client installed."
-    ),
+    pytest.mark.skipif(mysql.MySQLdb is None, reason="No python mysql client installed."),
 ]
 
 
@@ -143,8 +141,7 @@ def test_user_exists():
             mysql.user_exists,
             {
                 "sql": (
-                    "SELECT User,Host FROM mysql.user WHERE "
-                    "User = %(user)s AND Host = %(host)s"
+                    "SELECT User,Host FROM mysql.user WHERE " "User = %(user)s AND Host = %(host)s"
                 ),
                 "sql_args": {"host": "localhost", "user": "mytestuser"},
             },
@@ -198,9 +195,7 @@ def test_user_exists():
             password="BLUECOW",
         )
 
-    with patch.object(
-        mysql, "version", side_effect=["", "10.2.21-MariaDB", "10.2.21-MariaDB"]
-    ):
+    with patch.object(mysql, "version", side_effect=["", "10.2.21-MariaDB", "10.2.21-MariaDB"]):
         _test_call(
             mysql.user_exists,
             {
@@ -315,9 +310,7 @@ def test_user_create():
             )
 
     with patch.object(mysql, "version", side_effect=["", "8.0.10", "8.0.10"]):
-        with patch.object(
-            mysql, "user_exists", MagicMock(return_value=False)
-        ), patch.object(
+        with patch.object(mysql, "user_exists", MagicMock(return_value=False)), patch.object(
             mysql,
             "__get_auth_plugin",
             MagicMock(return_value="mysql_native_password"),
@@ -587,9 +580,7 @@ def test_grant_exists_true():
     ]
     with patch.object(mysql, "version", return_value="5.6.41"):
         mock = MagicMock(return_value=mock_grants)
-        with patch.object(
-            mysql, "user_grants", return_value=mock_grants
-        ) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
             ret = mysql.grant_exists(
                 "SELECT, INSERT, UPDATE", "testdb.testtableone", "testuser", "%"
             )
@@ -609,9 +600,7 @@ def test_grant_exists_false():
     ]
     with patch.object(mysql, "version", return_value="5.6.41"):
         mock = MagicMock(return_value=mock_grants)
-        with patch.object(
-            mysql, "user_grants", return_value=mock_grants
-        ) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
             ret = mysql.grant_exists("SELECT", "testdb.testtabletwo", "testuser", "%")
             assert not ret
 
@@ -623,31 +612,21 @@ def test_grant_exists_all():
     mock_grants = ["GRANT ALL PRIVILEGES ON testdb.testtableone TO `testuser`@`%`"]
     with patch.object(mysql, "version", return_value="8.0.10"):
         mock = MagicMock(return_value=mock_grants)
-        with patch.object(
-            mysql, "user_grants", return_value=mock_grants
-        ) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
             ret = mysql.grant_exists("ALL", "testdb.testtableone", "testuser", "%")
             assert ret
 
     with patch.object(mysql, "version", return_value="8.0.10"):
         mock = MagicMock(return_value=mock_grants)
-        with patch.object(
-            mysql, "user_grants", return_value=mock_grants
-        ) as mock_user_grants:
-            ret = mysql.grant_exists(
-                "all privileges", "testdb.testtableone", "testuser", "%"
-            )
+        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+            ret = mysql.grant_exists("all privileges", "testdb.testtableone", "testuser", "%")
             assert ret
 
     mock_grants = ["GRANT ALL PRIVILEGES ON testdb.testtableone TO `testuser`@`%`"]
     with patch.object(mysql, "version", return_value="5.6.41"):
         mock = MagicMock(return_value=mock_grants)
-        with patch.object(
-            mysql, "user_grants", return_value=mock_grants
-        ) as mock_user_grants:
-            ret = mysql.grant_exists(
-                "ALL PRIVILEGES", "testdb.testtableone", "testuser", "%"
-            )
+        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+            ret = mysql.grant_exists("ALL PRIVILEGES", "testdb.testtableone", "testuser", "%")
             assert ret
 
     mock_grants = [
@@ -656,17 +635,13 @@ def test_grant_exists_all():
     ]
     with patch.object(mysql, "version", return_value="8.0.10"):
         mock = MagicMock(return_value=mock_grants)
-        with patch.object(
-            mysql, "user_grants", return_value=mock_grants
-        ) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
             ret = mysql.grant_exists("ALL", "*.*", "testuser", "%")
             assert ret
 
     with patch.object(mysql, "version", return_value="8.0.10"):
         mock = MagicMock(return_value=mock_grants)
-        with patch.object(
-            mysql, "user_grants", return_value=mock_grants
-        ) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
             ret = mysql.grant_exists("all privileges", "*.*", "testuser", "%")
             assert ret
 
@@ -734,9 +709,7 @@ def test_get_slave_status_bad_server():
             assert rslt == []
 
 
-@pytest.mark.skip(
-    reason="MySQL module claims this function is not ready for production"
-)
+@pytest.mark.skip(reason="MySQL module claims this function is not ready for production")
 def test_free_slave():
     pass
 
@@ -855,13 +828,9 @@ def _test_call(function, expected_sql, *args, **kwargs):
         with patch.dict(mysql.__salt__, {"config.option": MagicMock()}):
             function(*args, **kwargs)
             if isinstance(expected_sql, dict):
-                calls = (
-                    call()
-                    .cursor()
-                    .execute("{}".format(expected_sql["sql"]), expected_sql["sql_args"])
-                )
+                calls = call().cursor().execute(f"{expected_sql['sql']}", expected_sql["sql_args"])
             else:
-                calls = call().cursor().execute("{}".format(expected_sql))
+                calls = call().cursor().execute(f"{expected_sql}")
             connect_mock.assert_has_calls((calls,), True)
 
 
@@ -949,9 +918,7 @@ def test__connect_mysqldb_exception():
     with patch.dict(mysql.__salt__, {"config.option": MagicMock()}):
         with patch(
             "MySQLdb.connect",
-            side_effect=mysql.OperationalError(
-                1698, "Access denied for user 'root'@'localhost'"
-            ),
+            side_effect=mysql.OperationalError(1698, "Access denied for user 'root'@'localhost'"),
         ):
             ret = mysql._connect()
             assert "mysql.error" in mysql.__context__

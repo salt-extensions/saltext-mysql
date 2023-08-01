@@ -1,22 +1,19 @@
 """
 unit tests for the mysql_cache cache
 """
-
-
 import logging
+from unittest.mock import call
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
-
 import salt.cache.mysql_cache as mysql_cache
 from salt.exceptions import SaltCacheError
-from tests.support.mock import MagicMock, call, patch
 
 log = logging.getLogger(__name__)
 
 pytestmark = [
-    pytest.mark.skipif(
-        mysql_cache.MySQLdb is None, reason="No python mysql client installed."
-    )
+    pytest.mark.skipif(mysql_cache.MySQLdb is None, reason="No python mysql client installed.")
 ]
 
 
@@ -167,9 +164,7 @@ def test_init_client():
             assert mysql_cache.__context__["mysql_kwargs"]["host"] == "127.0.0.1"
             assert mysql_cache.__context__["mysql_kwargs"]["db"] == "salt_cache"
             assert mysql_cache.__context__["mysql_kwargs"]["port"] == 3306
-            assert (
-                mysql_cache.__context__["mysql_kwargs"]["max_allowed_packet"] == 100000
-            )
+            assert mysql_cache.__context__["mysql_kwargs"]["max_allowed_packet"] == 100000
             assert not mysql_cache.__context__["mysql_fresh_connection"]
 
     with patch.dict(
@@ -192,9 +187,7 @@ def test_init_client():
             assert mysql_cache.__context__["mysql_kwargs"]["host"] == "mysql-host"
             assert mysql_cache.__context__["mysql_kwargs"]["db"] == "salt_mysql_db"
             assert mysql_cache.__context__["mysql_kwargs"]["port"] == 3306
-            assert (
-                mysql_cache.__context__["mysql_kwargs"]["max_allowed_packet"] == 100000
-            )
+            assert mysql_cache.__context__["mysql_kwargs"]["max_allowed_packet"] == 100000
             assert mysql_cache.__context__["mysql_fresh_connection"]
 
 

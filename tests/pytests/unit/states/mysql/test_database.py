@@ -1,10 +1,11 @@
 """
 This test checks mysql_database salt state
 """
-import pytest
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
+import pytest
 import salt.states.mysql_database as mysql_database
-from tests.support.mock import MagicMock, patch
 
 
 @pytest.fixture
@@ -38,17 +39,13 @@ def test_present():
     mock_no_err = MagicMock(return_value=None)
     mock_create = MagicMock(return_value=True)
     mock_create_failed = MagicMock(return_value=False)
-    with patch.dict(
-        mysql_database.__salt__, {"mysql.db_get": mock, "mysql.alter_db": mock_a}
-    ):
+    with patch.dict(mysql_database.__salt__, {"mysql.db_get": mock, "mysql.alter_db": mock_a}):
         mod_charset = "ascii"
         mod_collate = "ascii_general_ci"
         with patch.dict(mysql_database.__opts__, {"test": True}):
             comt = [
-                "Database character set {} != {} needs to be updated".format(
-                    mod_charset, charset
-                ),
-                "Database {} is going to be updated".format(dbname),
+                f"Database character set {mod_charset} != {charset} needs to be updated",
+                f"Database {dbname} is going to be updated",
             ]
             ret.update({"comment": "\n".join(comt)})
             ret.update({"result": None})
@@ -56,46 +53,30 @@ def test_present():
 
         with patch.dict(mysql_database.__opts__, {"test": True}):
             comt = [
-                "Database {} is already present".format(dbname),
-                "Database collate {} != {} needs to be updated".format(
-                    mod_collate, collate
-                ),
+                f"Database {dbname} is already present",
+                f"Database collate {mod_collate} != {collate} needs to be updated",
             ]
             ret.update({"comment": "\n".join(comt)})
             ret.update({"result": None})
-            assert (
-                mysql_database.present(
-                    dbname, character_set=charset, collate=mod_collate
-                )
-                == ret
-            )
+            assert mysql_database.present(dbname, character_set=charset, collate=mod_collate) == ret
 
         with patch.dict(mysql_database.__opts__, {}):
             comt = [
-                "Database character set {} != {} needs to be updated".format(
-                    mod_charset, charset
-                ),
-                "Database collate {} != {} needs to be updated".format(
-                    mod_collate, collate
-                ),
+                f"Database character set {mod_charset} != {charset} needs to be updated",
+                f"Database collate {mod_collate} != {collate} needs to be updated",
             ]
             ret.update({"comment": "\n".join(comt)})
             ret.update({"result": True})
             assert (
-                mysql_database.present(
-                    dbname, character_set=mod_charset, collate=mod_collate
-                )
+                mysql_database.present(dbname, character_set=mod_charset, collate=mod_collate)
                 == ret
             )
 
         with patch.dict(mysql_database.__opts__, {"test": False}):
-            comt = "Database {} is already present".format(dbname)
+            comt = f"Database {dbname} is already present"
             ret.update({"comment": comt})
             ret.update({"result": True})
-            assert (
-                mysql_database.present(dbname, character_set=charset, collate=collate)
-                == ret
-            )
+            assert mysql_database.present(dbname, character_set=charset, collate=collate) == ret
 
     with patch.dict(mysql_database.__salt__, {"mysql.db_get": mock_failed}):
         with patch.dict(mysql_database.__salt__, {"mysql.db_create": mock_create}):
@@ -104,19 +85,17 @@ def test_present():
                 assert mysql_database.present(dbname) == ret
 
             with patch.object(mysql_database, "_get_mysql_error", mock_no_err):
-                comt = "The database {} has been created".format(dbname)
+                comt = f"The database {dbname} has been created"
 
                 ret.update({"comment": comt, "result": True})
                 ret.update({"changes": {dbname: "Present"}})
                 assert mysql_database.present(dbname) == ret
 
-        with patch.dict(
-            mysql_database.__salt__, {"mysql.db_create": mock_create_failed}
-        ):
+        with patch.dict(mysql_database.__salt__, {"mysql.db_create": mock_create_failed}):
             ret["comment"] = ""
             with patch.object(mysql_database, "_get_mysql_error", mock_no_err):
                 ret.update({"changes": {}})
-                comt = "Failed to create database {}".format(dbname)
+                comt = f"Failed to create database {dbname}"
                 ret.update({"comment": comt, "result": False})
                 assert mysql_database.present(dbname) == ret
 
@@ -139,12 +118,12 @@ def test_absent():
         {"mysql.db_exists": mock_db_exists, "mysql.db_remove": mock_remove},
     ):
         with patch.dict(mysql_database.__opts__, {"test": True}):
-            comt = "Database {} is present and needs to be removed".format(dbname)
+            comt = f"Database {dbname} is present and needs to be removed"
             ret.update({"comment": comt, "result": None})
             assert mysql_database.absent(dbname) == ret
 
         with patch.dict(mysql_database.__opts__, {}):
-            comt = "Database {} has been removed".format(dbname)
+            comt = f"Database {dbname} has been removed"
             ret.update({"comment": comt, "result": True})
             ret.update({"changes": {dbname: "Absent"}})
             assert mysql_database.absent(dbname) == ret
@@ -156,6 +135,6 @@ def test_absent():
         with patch.dict(mysql_database.__opts__, {}):
             with patch.object(mysql_database, "_get_mysql_error", mock_err):
                 ret["changes"] = {}
-                comt = "Unable to remove database {} ({})".format(dbname, "salt")
+                comt = f"Unable to remove database {dbname} (salt)"
                 ret.update({"comment": comt, "result": False})
                 assert mysql_database.absent(dbname) == ret

@@ -1,7 +1,7 @@
-import pytest
+from unittest.mock import patch
 
+import pytest
 from salt.returners import mysql
-from tests.support.mock import patch
 
 
 def test_returner_with_bytes():

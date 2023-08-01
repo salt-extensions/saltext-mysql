@@ -1,15 +1,14 @@
 """
     :codeauthor: Jayesh Kariya <jayeshk@saltstack.com>
 """
-
 import logging
 import os
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
-
 import salt.modules.mysql as mysql_mod
 import salt.states.mysql_query as mysql_query
-from tests.support.mock import MagicMock, patch
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ def test_run():
             assert mysql_query.run(name, database, query) == ret
 
         with patch.object(mysql_query, "_get_mysql_error", mock_none):
-            comt = "Database {} is not present".format(name)
+            comt = f"Database {name} is not present"
             ret.update({"comment": comt, "result": None})
             assert mysql_query.run(name, database, query) == ret
 
@@ -88,26 +87,18 @@ def test_run():
         with patch.dict(mysql_query.__opts__, {"test": True}):
             comt = "Query would execute, storing result in grain: grain"
             ret.update({"comment": comt, "result": None})
-            assert (
-                mysql_query.run(name, database, query, output="grain", grain="grain")
-                == ret
-            )
+            assert mysql_query.run(name, database, query, output="grain", grain="grain") == ret
 
             comt = "Query would execute, storing result in grain: grain:salt"
             ret.update({"comment": comt})
             assert (
-                mysql_query.run(
-                    name, database, query, output="grain", grain="grain", key="salt"
-                )
+                mysql_query.run(name, database, query, output="grain", grain="grain", key="salt")
                 == ret
             )
 
             comt = "Query would execute, storing result in file: salt"
             ret.update({"comment": comt})
-            assert (
-                mysql_query.run(name, database, query, output="salt", grain="grain")
-                == ret
-            )
+            assert mysql_query.run(name, database, query, output="salt", grain="grain") == ret
 
             comt = "Query would execute, not storing result"
             ret.update({"comment": comt})
