@@ -1,9 +1,9 @@
 import logging
 
 import pytest
-
 import salt.cache
 import salt.loader
+
 from tests.pytests.functional.cache.helpers import run_common_cache_tests
 from tests.support.pytest.mysql import *  # pylint: disable=wildcard-import,unused-wildcard-import
 

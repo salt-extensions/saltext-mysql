@@ -20,7 +20,7 @@ class MySQLImage:
     container_id = attr.ib()
 
     def __str__(self):
-        return "{}:{}".format(self.name, self.tag)
+        return f"{self.name}:{self.tag}"
 
 
 @attr.s(kw_only=True, slots=True)
@@ -67,7 +67,7 @@ def get_test_versions():
             MySQLImage(
                 name=name,
                 tag=version,
-                container_id=random_string("mysql-{}-".format(version)),
+                container_id=random_string(f"mysql-{version}-"),
             )
         )
     name = "mariadb"
@@ -76,7 +76,7 @@ def get_test_versions():
             MySQLImage(
                 name=name,
                 tag=version,
-                container_id=random_string("mariadb-{}-".format(version)),
+                container_id=random_string(f"mariadb-{version}-"),
             )
         )
     name = "percona"
@@ -85,14 +85,14 @@ def get_test_versions():
             MySQLImage(
                 name=name,
                 tag=version,
-                container_id=random_string("percona-{}-".format(version)),
+                container_id=random_string(f"percona-{version}-"),
             )
         )
     return test_versions
 
 
 def get_test_version_id(value):
-    return "container={}".format(value)
+    return f"container={value}"
 
 
 @pytest.fixture(scope="module", params=get_test_versions(), ids=get_test_version_id)
@@ -125,8 +125,8 @@ def check_container_started(timeout_at, container, combo):
                 return False
             ret = container.run(
                 "mysql",
-                "--user={}".format(combo.mysql_user),
-                "--password={}".format(combo.mysql_passwd),
+                f"--user={combo.mysql_user}",
+                f"--password={combo.mysql_passwd}",
                 "-e",
                 "SELECT 1",
             )
@@ -181,7 +181,5 @@ def mysql_container(salt_factories, mysql_combo):
     container.container_start_check(check_container_started, container, mysql_combo)
     with container.started():
         mysql_combo.container = container
-        mysql_combo.mysql_port = container.get_host_port_binding(
-            3306, protocol="tcp", ipv6=False
-        )
+        mysql_combo.mysql_port = container.get_host_port_binding(3306, protocol="tcp", ipv6=False)
         yield mysql_combo

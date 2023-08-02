@@ -4,7 +4,6 @@
 
     PyTest fixtures
 """
-
 import logging
 
 import pytest

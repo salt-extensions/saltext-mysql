@@ -50,7 +50,6 @@ value to ``mysql``:
 .. _`python-mysql documentation`: http://python-mysql.readthedocs.io/en/latest/
 
 """
-
 import copy
 import logging
 import time
@@ -319,9 +318,7 @@ def ls(bank):
     bank.
     """
     _init_client()
-    query = "SELECT etcd_key FROM {} WHERE bank=%s".format(
-        __context__["mysql_table_name"]
-    )
+    query = "SELECT etcd_key FROM {} WHERE bank=%s".format(__context__["mysql_table_name"])
     cur, _ = run_query(__context__.get("mysql_client"), query, args=(bank,))
     out = [row[0] for row in cur.fetchall()]
     cur.close()
@@ -335,9 +332,7 @@ def contains(bank, key):
     _init_client()
     if key is None:
         data = (bank,)
-        query = "SELECT COUNT(data) FROM {} WHERE bank=%s".format(
-            __context__["mysql_table_name"]
-        )
+        query = "SELECT COUNT(data) FROM {} WHERE bank=%s".format(__context__["mysql_table_name"])
     else:
         data = (bank, key)
         query = "SELECT COUNT(data) FROM {} WHERE bank=%s AND etcd_key=%s".format(
@@ -355,9 +350,8 @@ def updated(bank, key):
     key.
     """
     _init_client()
-    query = (
-        "SELECT UNIX_TIMESTAMP(last_update) FROM {} WHERE bank=%s "
-        "AND etcd_key=%s".format(__context__["mysql_table_name"])
+    query = "SELECT UNIX_TIMESTAMP(last_update) FROM {} WHERE bank=%s " "AND etcd_key=%s".format(
+        __context__["mysql_table_name"]
     )
     data = (bank, key)
     cur, _ = run_query(__context__.get("mysql_client"), query=query, args=data)

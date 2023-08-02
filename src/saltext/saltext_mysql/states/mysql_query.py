@@ -18,8 +18,6 @@ Its output may be stored in a file or in a grain.
         - query:    "SELECT * FROM table;"
         - output:   "/tmp/query_id.txt"
 """
-
-
 import os.path
 import sys
 
@@ -41,9 +39,7 @@ def _get_mysql_error():
     Look in module context for a MySQL error. Eventually we should make a less
     ugly way of doing this.
     """
-    return sys.modules[__salt__["test.ping"].__module__].__context__.pop(
-        "mysql.error", None
-    )
+    return sys.modules[__salt__["test.ping"].__module__].__context__.pop("mysql.error", None)
 
 
 def run_file(
@@ -57,7 +53,7 @@ def run_file(
     saltenv=None,
     check_db_exists=True,
     client_flags=None,
-    **connection_args
+    **connection_args,
 ):
     """
     Execute an arbitrary query on the specified database
@@ -104,7 +100,7 @@ def run_file(
         "name": name,
         "changes": {},
         "result": True,
-        "comment": "Database {} is already present".format(database),
+        "comment": f"Database {database} is already present",
     }
 
     if client_flags is None:
@@ -125,7 +121,7 @@ def run_file(
         query_file = __salt__["cp.cache_file"](query_file, saltenv=saltenv or __env__)
 
     if not os.path.exists(query_file):
-        ret["comment"] = "File {} does not exist".format(query_file)
+        ret["comment"] = f"File {query_file} does not exist"
         ret["result"] = False
         return ret
 
@@ -138,7 +134,7 @@ def run_file(
             return ret
 
         ret["result"] = None
-        ret["comment"] = "Database {} is not present".format(database)
+        ret["comment"] = f"Database {database} is not present"
         return ret
 
     # Check if execution needed
@@ -149,9 +145,7 @@ def run_file(
                 return ret
             elif __opts__["test"]:
                 ret["result"] = None
-                ret["comment"] = (
-                    "Query would execute, storing result in " + "grain: " + grain
-                )
+                ret["comment"] = "Query would execute, storing result in " + "grain: " + grain
                 return ret
         elif grain is not None:
             if grain in __salt__["grains.ls"]():
@@ -159,25 +153,17 @@ def run_file(
             else:
                 grain_value = {}
             if not overwrite and key in grain_value:
-                ret["comment"] = (
-                    "No execution needed. Grain " + grain + ":" + key + " already set"
-                )
+                ret["comment"] = "No execution needed. Grain " + grain + ":" + key + " already set"
                 return ret
             elif __opts__["test"]:
                 ret["result"] = None
                 ret["comment"] = (
-                    "Query would execute, storing result in "
-                    + "grain: "
-                    + grain
-                    + ":"
-                    + key
+                    "Query would execute, storing result in " + "grain: " + grain + ":" + key
                 )
                 return ret
         else:
             ret["result"] = False
-            ret["comment"] = (
-                "Error: output type 'grain' needs the grain " + "parameter\n"
-            )
+            ret["comment"] = "Error: output type 'grain' needs the grain " + "parameter\n"
             return ret
     elif output is not None:
         if not overwrite and os.path.isfile(output):
@@ -185,9 +171,7 @@ def run_file(
             return ret
         elif __opts__["test"]:
             ret["result"] = None
-            ret["comment"] = (
-                "Query would execute, storing result in " + "file: " + output
-            )
+            ret["comment"] = "Query would execute, storing result in " + "file: " + output
             return ret
     elif __opts__["test"]:
         ret["result"] = None
@@ -223,18 +207,14 @@ def run_file(
                 grain_value = {}
             grain_value[key] = query_result
             __salt__["grains.setval"](grain, grain_value)
-            ret["changes"]["query"] = (
-                "Executed. Output into grain: " + grain + ":" + key
-            )
+            ret["changes"]["query"] = "Executed. Output into grain: " + grain + ":" + key
     elif output is not None:
         ret["changes"]["query"] = "Executed. Output into " + output
         with salt.utils.files.fopen(output, "w") as output_file:
             if "results" in query_result:
                 for res in query_result["results"]:
                     for col, val in res.items():
-                        output_file.write(
-                            salt.utils.stringutils.to_str(col + ":" + val + "\n")
-                        )
+                        output_file.write(salt.utils.stringutils.to_str(col + ":" + val + "\n"))
             else:
                 output_file.write(salt.utils.stringutils.to_str(query_result))
     else:
@@ -253,7 +233,7 @@ def run(
     overwrite=True,
     check_db_exists=True,
     client_flags=None,
-    **connection_args
+    **connection_args,
 ):
     """
     Execute an arbitrary query on the specified database
@@ -295,7 +275,7 @@ def run(
         "name": name,
         "changes": {},
         "result": True,
-        "comment": "Database {} is already present".format(database),
+        "comment": f"Database {database} is already present",
     }
 
     if client_flags is None:
@@ -316,7 +296,7 @@ def run(
             return ret
 
         ret["result"] = None
-        ret["comment"] = "Database {} is not present".format(name)
+        ret["comment"] = f"Database {name} is not present"
         return ret
 
     # Check if execution needed
@@ -327,9 +307,7 @@ def run(
                 return ret
             elif __opts__["test"]:
                 ret["result"] = None
-                ret["comment"] = (
-                    "Query would execute, storing result in " + "grain: " + grain
-                )
+                ret["comment"] = "Query would execute, storing result in " + "grain: " + grain
                 return ret
         elif grain is not None:
             if grain in __salt__["grains.ls"]():
@@ -337,25 +315,17 @@ def run(
             else:
                 grain_value = {}
             if not overwrite and key in grain_value:
-                ret["comment"] = (
-                    "No execution needed. Grain " + grain + ":" + key + " already set"
-                )
+                ret["comment"] = "No execution needed. Grain " + grain + ":" + key + " already set"
                 return ret
             elif __opts__["test"]:
                 ret["result"] = None
                 ret["comment"] = (
-                    "Query would execute, storing result in "
-                    + "grain: "
-                    + grain
-                    + ":"
-                    + key
+                    "Query would execute, storing result in " + "grain: " + grain + ":" + key
                 )
                 return ret
         else:
             ret["result"] = False
-            ret["comment"] = (
-                "Error: output type 'grain' needs the grain " + "parameter\n"
-            )
+            ret["comment"] = "Error: output type 'grain' needs the grain " + "parameter\n"
             return ret
     elif output is not None:
         if not overwrite and os.path.isfile(output):
@@ -363,9 +333,7 @@ def run(
             return ret
         elif __opts__["test"]:
             ret["result"] = None
-            ret["comment"] = (
-                "Query would execute, storing result in " + "file: " + output
-            )
+            ret["comment"] = "Query would execute, storing result in " + "file: " + output
             return ret
     elif __opts__["test"]:
         ret["result"] = None
@@ -396,26 +364,20 @@ def run(
                 grain_value = {}
             grain_value[key] = query_result
             __salt__["grains.setval"](grain, grain_value)
-            ret["changes"]["query"] = (
-                "Executed. Output into grain: " + grain + ":" + key
-            )
+            ret["changes"]["query"] = "Executed. Output into grain: " + grain + ":" + key
     elif output is not None:
         ret["changes"]["query"] = "Executed. Output into " + output
         with salt.utils.files.fopen(output, "w") as output_file:
             if "results" in query_result:
                 for res in query_result["results"]:
                     for col, val in res.items():
-                        output_file.write(
-                            salt.utils.stringutils.to_str(col + ":" + val + "\n")
-                        )
+                        output_file.write(salt.utils.stringutils.to_str(col + ":" + val + "\n"))
             else:
                 if isinstance(query_result, str):
                     output_file.write(salt.utils.stringutils.to_str(query_result))
                 else:
                     for col, val in query_result.items():
-                        output_file.write(
-                            salt.utils.stringutils.to_str("{}:{}\n".format(col, val))
-                        )
+                        output_file.write(salt.utils.stringutils.to_str(f"{col}:{val}\n"))
     else:
         ret["changes"]["query"] = "Executed"
 

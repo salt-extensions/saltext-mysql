@@ -44,7 +44,6 @@ Complete example
             as_list: True
             with_lists: [1,3]
 """
-
 import logging
 from contextlib import contextmanager
 

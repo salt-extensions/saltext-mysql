@@ -4,7 +4,6 @@ Returners Directory
 :func:`get_returner_options` is a general purpose function that returners may
 use to fetch their configuration options.
 """
-
 import logging
 
 log = logging.getLogger(__name__)
@@ -83,9 +82,7 @@ def get_returner_options(virtualname=None, ret=None, attrs=None, **kwargs):
 
     # override some values with relevant profile options
     _options.update(
-        _fetch_profile_opts(
-            cfg, virtualname, __salt__, _options, profile_attr, profile_attrs
-        )
+        _fetch_profile_opts(cfg, virtualname, __salt__, _options, profile_attr, profile_attrs)
     )
 
     # override some values with relevant options from
@@ -120,9 +117,9 @@ def _fetch_option(cfg, ret_config, virtualname, attr_name):
     if isinstance(cfg, dict):
         c_cfg = cfg
     else:
-        c_cfg = cfg("{}".format(virtualname), {})
+        c_cfg = cfg(f"{virtualname}", {})
 
-    default_cfg_key = "{}.{}".format(virtualname, attr_name)
+    default_cfg_key = f"{virtualname}.{attr_name}"
     if not ret_config:
         # Using the default configuration key
         if isinstance(cfg, dict):
@@ -134,7 +131,7 @@ def _fetch_option(cfg, ret_config, virtualname, attr_name):
             return c_cfg.get(attr_name, cfg(default_cfg_key))
 
     # Using ret_config to override the default configuration key
-    ret_cfg = cfg("{}.{}".format(ret_config, virtualname), {})
+    ret_cfg = cfg(f"{ret_config}.{virtualname}", {})
 
     override_default_cfg_key = "{}.{}.{}".format(
         ret_config,
@@ -179,9 +176,7 @@ def _options_browser(cfg, ret_config, defaults, virtualname, options):
         continue
 
 
-def _fetch_profile_opts(
-    cfg, virtualname, __salt__, _options, profile_attr, profile_attrs
-):
+def _fetch_profile_opts(cfg, virtualname, __salt__, _options, profile_attr, profile_attrs):
     """
     Fetches profile specific options if applicable
 
@@ -208,7 +203,4 @@ def _fetch_profile_opts(
     if not creds:
         return {}
 
-    return {
-        pattr: creds.get("{}.{}".format(virtualname, profile_attrs[pattr]))
-        for pattr in profile_attrs
-    }
+    return {pattr: creds.get(f"{virtualname}.{profile_attrs[pattr]}") for pattr in profile_attrs}

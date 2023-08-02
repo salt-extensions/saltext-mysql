@@ -4,19 +4,18 @@ Salt's pluggable authentication system
 This system allows for authentication to be managed in a module pluggable way
 so that any external authentication system can be used inside of Salt
 """
-
 # 1. Create auth loader instance
 # 2. Accept arguments as a dict
 # 3. Verify with function introspection
 # 4. Execute auth function
 # 5. Cache auth token with relative data opts['token_dir']
 # 6. Interface to verify tokens
-
 import getpass
 import logging
 import random
 import time
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
+from collections.abc import Mapping
 
 import salt.channel.client
 import salt.config
@@ -119,9 +118,7 @@ class LoadAuth:
         if f_time > self.max_fail:
             self.max_fail = f_time
         deviation = self.max_fail / 4
-        r_time = random.SystemRandom().uniform(
-            self.max_fail - deviation, self.max_fail + deviation
-        )
+        r_time = random.SystemRandom().uniform(self.max_fail - deviation, self.max_fail + deviation)
         while start + r_time > time.time():
             time.sleep(0.001)
         return False
@@ -230,9 +227,7 @@ class LoadAuth:
         if groups:
             tdata["groups"] = groups
 
-        return self.tokens["{}.mk_token".format(self.opts["eauth_tokens"])](
-            self.opts, tdata
-        )
+        return self.tokens["{}.mk_token".format(self.opts["eauth_tokens"])](self.opts, tdata)
 
     def get_tok(self, tok):
         """
@@ -241,9 +236,7 @@ class LoadAuth:
         """
         tdata = {}
         try:
-            tdata = self.tokens["{}.get_token".format(self.opts["eauth_tokens"])](
-                self.opts, tok
-            )
+            tdata = self.tokens["{}.get_token".format(self.opts["eauth_tokens"])](self.opts, tok)
         except salt.exceptions.SaltDeserializationError:
             log.warning("Failed to load token %r - removing broken/empty file.", tok)
             rm_tok = True
@@ -269,9 +262,7 @@ class LoadAuth:
         """
         List all tokens in eauth_tokens storage.
         """
-        return self.tokens["{}.list_tokens".format(self.opts["eauth_tokens"])](
-            self.opts
-        )
+        return self.tokens["{}.list_tokens".format(self.opts["eauth_tokens"])](self.opts)
 
     def rm_token(self, tok):
         """
@@ -336,9 +327,7 @@ class LoadAuth:
                     if auth_key == key[check_key]:
                         return auth_user.sudo_name()
                 return False
-            elif (
-                load["user"] == self.opts.get("user", "root") or load["user"] == "root"
-            ):
+            elif load["user"] == self.opts.get("user", "root") or load["user"] == "root":
                 for check_key in key:
                     if auth_key == key[check_key]:
                         return True
@@ -537,11 +526,7 @@ class Resolver:
             return ret
         fstr = f"{eauth}.auth"
         if fstr not in self.auth:
-            print(
-                'The specified external authentication system "{}" is not available'.format(
-                    eauth
-                )
-            )
+            print(f'The specified external authentication system "{eauth}" is not available')
             print(
                 "Available eauth types: {}".format(
                     ", ".join(sorted(k[:-5] for k in self.auth if k.endswith(".auth")))

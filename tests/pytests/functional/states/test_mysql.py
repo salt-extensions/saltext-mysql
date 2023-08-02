@@ -5,10 +5,10 @@ import logging
 import time
 
 import pytest
+import salt.modules.mysql as mysqlmod
 from pytestshellutils.utils import format_callback_to_string
 from saltfactories.utils.functional import StateResult
 
-import salt.modules.mysql as mysqlmod
 from tests.support.pytest.mysql import *  # pylint: disable=wildcard-import,unused-wildcard-import
 
 log = logging.getLogger(__name__)
@@ -16,9 +16,7 @@ log = logging.getLogger(__name__)
 pytestmark = [
     pytest.mark.slow_test,
     pytest.mark.skip_if_binaries_missing("dockerd"),
-    pytest.mark.skipif(
-        mysqlmod.MySQLdb is None, reason="No python mysql client installed."
-    ),
+    pytest.mark.skipif(mysqlmod.MySQLdb is None, reason="No python mysql client installed."),
 ]
 
 
@@ -187,8 +185,7 @@ def test_grants_present_absent(mysql, mysql_grants):
         assert ret.changes == {"add_salt_grants": "Present"}
         assert ret.comment
         assert (
-            ret.comment
-            == "Grant select,insert,update on salt.* to george@localhost has been added"
+            ret.comment == "Grant select,insert,update on salt.* to george@localhost has been added"
         )
 
         ret = mysql_grants.absent(
@@ -244,8 +241,7 @@ def test_grants_present_absent_all_privileges(mysql, mysql_grants):
 
         assert ret.comment
         assert (
-            ret.comment
-            == "Grant all privileges on salt_2_0.* to george@localhost has been added"
+            ret.comment == "Grant all privileges on salt_2_0.* to george@localhost has been added"
         )
 
         ret = mysql_grants.absent(
@@ -307,10 +303,7 @@ def test_user_present_absent_passwordless(mysql_user):
     assert ret.changes
     assert ret.changes == {"george": "Present"}
     assert ret.comment
-    assert (
-        ret.comment
-        == "The user george@localhost has been added with passwordless login"
-    )
+    assert ret.comment == "The user george@localhost has been added with passwordless login"
 
     ret = mysql_user.absent(
         name="george",
@@ -351,9 +344,7 @@ def test_user_present_absent_unixsocket(mysql, mysql_user, mysql_container):
         assert ret.changes
         assert ret.changes == {"george": "Present"}
         assert ret.comment
-        assert (
-            ret.comment == "The user george@localhost has been added using unix_socket"
-        )
+        assert ret.comment == "The user george@localhost has been added using unix_socket"
 
         ret = mysql_user.absent(
             name="george",
@@ -369,9 +360,7 @@ def test_user_present_absent_unixsocket(mysql, mysql_user, mysql_container):
             assert ret
 
 
-def test_grants_present_absent_state_file(
-    modules, mysql, mysql_grants, mysql_combo, state_tree
-):
+def test_grants_present_absent_state_file(modules, mysql, mysql_grants, mysql_combo, state_tree):
 
     content = """
     sbclient_2_0:

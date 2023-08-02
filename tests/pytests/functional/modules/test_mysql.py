@@ -5,10 +5,10 @@ import logging
 import time
 
 import pytest
-from pytestshellutils.utils import format_callback_to_string
-
 import salt.modules.mysql as mysqlmod
+from pytestshellutils.utils import format_callback_to_string
 from salt.utils.versions import version_cmp
+
 from tests.support.pytest.mysql import *  # pylint: disable=wildcard-import,unused-wildcard-import
 
 log = logging.getLogger(__name__)
@@ -16,9 +16,7 @@ log = logging.getLogger(__name__)
 pytestmark = [
     pytest.mark.slow_test,
     pytest.mark.skip_if_binaries_missing("dockerd"),
-    pytest.mark.skipif(
-        mysqlmod.MySQLdb is None, reason="No python mysql client installed."
-    ),
+    pytest.mark.skipif(mysqlmod.MySQLdb is None, reason="No python mysql client installed."),
 ]
 
 

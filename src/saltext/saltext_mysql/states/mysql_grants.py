@@ -44,7 +44,6 @@ instructions.
        - database: somedb.sometable
        - user: joe
 """
-
 import sys
 
 
@@ -62,9 +61,7 @@ def _get_mysql_error():
     Look in module context for a MySQL error. Eventually we should make a less
     ugly way of doing this.
     """
-    return sys.modules[__salt__["test.ping"].__module__].__context__.pop(
-        "mysql.error", None
-    )
+    return sys.modules[__salt__["test.ping"].__module__].__context__.pop("mysql.error", None)
 
 
 def present(
@@ -77,7 +74,7 @@ def present(
     escape=True,
     revoke_first=False,
     ssl_option=False,
-    **connection_args
+    **connection_args,
 ):
     """
     Ensure that the grant is present with the specified properties
@@ -182,14 +179,14 @@ def present(
                     host=host,
                     grant_option=grant_option,
                     escape=escape,
-                    **connection_args
+                    **connection_args,
                 )
 
     # The grant is not present, make it!
     if __opts__["test"]:
         # there is probably better things to make in test mode
         ret["result"] = None
-        ret["comment"] = "MySQL grant {} is set to be created".format(name)
+        ret["comment"] = f"MySQL grant {name} is set to be created"
         return ret
     if __salt__["mysql.grant_add"](
         grant, database, user, host, grant_option, escape, ssl_option, **connection_args
@@ -202,7 +199,7 @@ def present(
         ret["comment"] = ret["comment"].format(grant, database, user, host)
         err = _get_mysql_error()
         if err is not None:
-            ret["comment"] += " ({})".format(err)
+            ret["comment"] += f" ({err})"
         ret["result"] = False
     return ret
 
@@ -215,7 +212,7 @@ def absent(
     host="localhost",
     grant_option=False,
     escape=True,
-    **connection_args
+    **connection_args,
 ):
     """
     Ensure that the grant is absent
@@ -244,7 +241,7 @@ def absent(
 
         if __opts__["test"]:
             ret["result"] = None
-            ret["comment"] = "MySQL grant {} is set to be revoked".format(name)
+            ret["comment"] = f"MySQL grant {name} is set to be revoked"
             return ret
         if __salt__["mysql.grant_revoke"](
             grant, database, user, host, grant_option, **connection_args
@@ -257,9 +254,7 @@ def absent(
         else:
             err = _get_mysql_error()
             if err is not None:
-                ret[
-                    "comment"
-                ] = "Unable to revoke grant {} on {} for {}@{} ({})".format(
+                ret["comment"] = "Unable to revoke grant {} on {} for {}@{} ({})".format(
                     grant, database, user, host, err
                 )
                 ret["result"] = False
@@ -267,18 +262,14 @@ def absent(
     else:
         err = _get_mysql_error()
         if err is not None:
-            ret[
-                "comment"
-            ] = "Unable to determine if grant {} on {} for {}@{} exists ({})".format(
+            ret["comment"] = "Unable to determine if grant {} on {} for {}@{} exists ({})".format(
                 grant, database, user, host, err
             )
             ret["result"] = False
             return ret
 
     # fallback
-    ret[
-        "comment"
-    ] = "Grant {} on {} to {}@{} is not present, so it cannot be revoked".format(
+    ret["comment"] = "Grant {} on {} to {}@{} is not present, so it cannot be revoked".format(
         grant, database, user, host
     )
     return ret

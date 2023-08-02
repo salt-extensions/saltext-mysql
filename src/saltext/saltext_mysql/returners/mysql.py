@@ -137,7 +137,6 @@ To override individual configuration items, append --return_kwargs '{"key:": "va
     salt '*' test.ping --return mysql --return_kwargs '{"db": "another-salt"}'
 
 """
-
 import logging
 import sys
 from contextlib import contextmanager
@@ -274,7 +273,7 @@ def _get_serv(ret=None, commit=False):
                 pass
         except OperationalError as exc:
             raise salt.exceptions.SaltMasterError(
-                "MySQL returner could not connect to database: {exc}".format(exc=exc)
+                f"MySQL returner could not connect to database: {exc}"
             )
 
     cursor = conn.cursor()
@@ -322,9 +321,7 @@ def returner(ret):
             )
     except salt.exceptions.SaltMasterError as exc:
         log.critical(exc)
-        log.critical(
-            "Could not store return with MySQL returner. MySQL server unavailable."
-        )
+        log.critical("Could not store return with MySQL returner. MySQL server unavailable.")
 
 
 def event_return(events):
@@ -436,9 +433,7 @@ def get_jids():
         data = cur.fetchall()
         ret = {}
         for jid in data:
-            ret[jid[0]] = salt.utils.jid.format_jid_instance(
-                jid[0], salt.utils.json.loads(jid[1])
-            )
+            ret[jid[0]] = salt.utils.jid.format_jid_instance(jid[0], salt.utils.json.loads(jid[1]))
         return ret
 
 
@@ -463,9 +458,7 @@ def get_jids_filter(count, filter_find_job=True):
         ret = []
         for jid in data:
             ret.append(
-                salt.utils.jid.format_jid_instance_ext(
-                    jid[0], salt.utils.json.loads(jid[1])
-                )
+                salt.utils.jid.format_jid_instance_ext(jid[0], salt.utils.json.loads(jid[1]))
             )
         return ret
 
@@ -509,9 +502,7 @@ def _purge_jobs(timestamp):
             cur.execute(sql, (timestamp,))
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
-            log.error(
-                "mysql returner archiver was unable to delete contents of table 'jids'"
-            )
+            log.error("mysql returner archiver was unable to delete contents of table 'jids'")
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
 
@@ -521,8 +512,7 @@ def _purge_jobs(timestamp):
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
             log.error(
-                "mysql returner archiver was unable to delete contents of table"
-                " 'salt_returns'"
+                "mysql returner archiver was unable to delete contents of table" " 'salt_returns'"
             )
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
@@ -533,8 +523,7 @@ def _purge_jobs(timestamp):
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
             log.error(
-                "mysql returner archiver was unable to delete contents of table"
-                " 'salt_events'"
+                "mysql returner archiver was unable to delete contents of table" " 'salt_events'"
             )
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
@@ -555,32 +544,24 @@ def _archive_jobs(timestamp):
         for table_name in source_tables:
             try:
                 tmp_table_name = table_name + "_archive"
-                sql = "create table if not exists {} like {}".format(
-                    tmp_table_name, table_name
-                )
+                sql = f"create table if not exists {tmp_table_name} like {table_name}"
                 cur.execute(sql)
                 cur.execute("COMMIT")
                 target_tables[table_name] = tmp_table_name
             except MySQLdb.Error as e:
-                log.error(
-                    "mysql returner archiver was unable to create the archive tables."
-                )
+                log.error("mysql returner archiver was unable to create the archive tables.")
                 log.error(str(e))
                 raise salt.exceptions.SaltRunnerError(str(e))
 
         try:
             sql = (
                 "insert into `{}` select * from `{}` where jid in (select distinct jid"
-                " from salt_returns where alter_time < %s)".format(
-                    target_tables["jids"], "jids"
-                )
+                " from salt_returns where alter_time < %s)".format(target_tables["jids"], "jids")
             )
             cur.execute(sql, (timestamp,))
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
-            log.error(
-                "mysql returner archiver was unable to copy contents of table 'jids'"
-            )
+            log.error("mysql returner archiver was unable to copy contents of table 'jids'")
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
         except Exception as e:  # pylint: disable=broad-except
@@ -595,8 +576,7 @@ def _archive_jobs(timestamp):
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
             log.error(
-                "mysql returner archiver was unable to copy contents of table"
-                " 'salt_returns'"
+                "mysql returner archiver was unable to copy contents of table" " 'salt_returns'"
             )
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
@@ -609,8 +589,7 @@ def _archive_jobs(timestamp):
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
             log.error(
-                "mysql returner archiver was unable to copy contents of table"
-                " 'salt_events'"
+                "mysql returner archiver was unable to copy contents of table" " 'salt_events'"
             )
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
@@ -640,8 +619,6 @@ def clean_old_jobs():
             else:
                 _purge_jobs(stamp)
         except MySQLdb.Error as e:
-            log.error(
-                "Mysql returner was unable to get timestamp for purge/archive of jobs"
-            )
+            log.error("Mysql returner was unable to get timestamp for purge/archive of jobs")
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
