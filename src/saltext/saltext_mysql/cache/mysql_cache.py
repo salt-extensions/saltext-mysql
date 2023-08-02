@@ -70,6 +70,7 @@ try:
     class InterfaceError(Exception):
         pass
 
+
 except ImportError:
     try:
         # MySQLdb import failed, try to import PyMySQL

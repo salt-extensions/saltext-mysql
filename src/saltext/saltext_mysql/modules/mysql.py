@@ -751,7 +751,7 @@ def query(database, query, **connection_args):
 
     .. code-block:: python
 
-        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1l}
+        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1L}
 
     CLI Example:
 
@@ -767,11 +767,11 @@ def query(database, query, **connection_args):
             "columns": ("id", "name", "cash"),
             "query time": {"human": "1.0ms", "raw": "0.001"},
             "results": (
-                (1l, "User 1", Decimal("110.000000")),
-                (2l, "User 2", Decimal("215.636756")),
-                (3l, "User 3", Decimal("0.040000")),
+                (1L, "User 1", Decimal("110.000000")),
+                (2L, "User 2", Decimal("215.636756")),
+                (3L, "User 3", Decimal("0.040000")),
             ),
-            "rows returned": 3l,
+            "rows returned": 3L,
         }
 
     CLI Example:
@@ -784,7 +784,7 @@ def query(database, query, **connection_args):
 
     .. code-block:: python
 
-        {"query time": {"human": "25.6ms", "raw": "0.02563"}, "rows affected": 1l}
+        {"query time": {"human": "25.6ms", "raw": "0.02563"}, "rows affected": 1L}
 
     CLI Example:
 
@@ -796,7 +796,7 @@ def query(database, query, **connection_args):
 
     .. code-block:: python
 
-        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1l}
+        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1L}
 
     Jinja Example: Run a query on ``mydb`` and use row 0, column 0's data.
 
@@ -898,7 +898,7 @@ def file_query(database, file_name, **connection_args):
 
     .. code-block:: python
 
-        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1l}
+        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1L}
 
     """
     if not HAS_SQLPARSE:
