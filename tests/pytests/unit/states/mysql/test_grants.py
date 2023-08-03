@@ -80,9 +80,7 @@ def test_absent():
                 ret.update({"comment": comt, "result": False, "changes": {}})
                 assert mysql_grants.absent(name) == ret
 
-                comt = (
-                    "Unable to determine if grant None on " "None for None@localhost exists (salt)"
-                )
+                comt = "Unable to determine if grant None on None for None@localhost exists (salt)"
                 ret.update({"comment": comt})
                 assert mysql_grants.absent(name) == ret
 

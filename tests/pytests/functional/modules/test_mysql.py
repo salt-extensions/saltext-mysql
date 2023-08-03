@@ -301,18 +301,14 @@ def test_grant_replication_replica_add_revoke(mysql, mysql_container):
     if "mariadb" not in mysql_container.mysql_name:
         pytest.skip(
             "The REPLICATION REPLICA grant is unavailable "
-            "for the {}:{} docker image.".format(
-                mysql_container.mysql_name, mysql_container.mysql_version
-            )
+            f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
     # The REPLICATION REPLICA grant was added in mariadb 10.5.1
     if version_cmp(mysql_container.mysql_version, "10.5.1") < 0:
         pytest.skip(
             "The REPLICATION REPLICA grant is unavailable "
-            "for the {}:{} docker image.".format(
-                mysql_container.mysql_name, mysql_container.mysql_version
-            )
+            f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
     # Create the database
@@ -493,18 +489,14 @@ def test_grant_binlog_monitor_add_revoke(mysql, mysql_container):
     if "mariadb" not in mysql_container.mysql_name:
         pytest.skip(
             "The BINLOG MONITOR grant is unavailable "
-            "for the {}:{} docker image.".format(
-                mysql_container.mysql_name, mysql_container.mysql_version
-            )
+            f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
     # The BINLOG MONITOR grant was added in mariadb 10.5.2
     if version_cmp(mysql_container.mysql_version, "10.5.2") < 0:
         pytest.skip(
             "The BINLOG_MONITOR grant is unavailable "
-            "for the {}:{} docker image.".format(
-                mysql_container.mysql_name, mysql_container.mysql_version
-            )
+            f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
     # Create the database
@@ -569,18 +561,14 @@ def test_grant_replica_monitor_add_revoke(mysql, mysql_container):
     if "mariadb" not in mysql_container.mysql_name:
         pytest.skip(
             "The REPLICA MONITOR grant is unavailable "
-            "for the {}:{} docker image.".format(
-                mysql_container.mysql_name, mysql_container.mysql_version
-            )
+            f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
     # The REPLICA MONITOR grant was added in mariadb 10.5.9
     if version_cmp(mysql_container.mysql_version, "10.5.9") < 0:
         pytest.skip(
             "The REPLICA MONITOR grant is unavailable "
-            "for the {}:{} docker image.".format(
-                mysql_container.mysql_name, mysql_container.mysql_version
-            )
+            f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
     # Create the database
@@ -645,18 +633,14 @@ def test_grant_slave_monitor_add_revoke(mysql, mysql_container):
     if "mariadb" not in mysql_container.mysql_name:
         pytest.skip(
             "The SLAVE MONITOR grant is unavailable "
-            "for the {}:{} docker image.".format(
-                mysql_container.mysql_name, mysql_container.mysql_version
-            )
+            f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
     # The SLAVE MONITOR grant was added in mariadb 10.5.9
     if version_cmp(mysql_container.mysql_version, "10.5.9") < 0:
         pytest.skip(
             "The SLAVE MONITOR grant is unavailable "
-            "for the {}:{} docker image.".format(
-                mysql_container.mysql_name, mysql_container.mysql_version
-            )
+            f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
     # Create the database
