@@ -323,9 +323,7 @@ def test_user_present_absent_unixsocket(mysql, mysql_user, mysql_container):
         if mysql_container.mysql_version in ("10.1", "10.2", "10.3"):
             pytest.skip(
                 "The auth_socket plugin is unavaiable "
-                "for the {}:{} docker image.".format(
-                    mysql_container.mysql_name, mysql_container.mysql_version
-                )
+                f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
             )
 
     # enable the auth_socket plugin on MySQL

@@ -13,3 +13,4 @@ pytest-httpserver
 pytest-custom-exit-code >= 0.3
 flaky
 markupsafe==2.0.1
+saltpylint

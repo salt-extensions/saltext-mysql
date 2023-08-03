@@ -8,7 +8,7 @@ from saltfactories.utils import random_string
 # This `pytest.importorskip` here actually works because this module
 # is imported into test modules, otherwise, the skipping would just fail
 pytest.importorskip("docker")
-import docker.errors  # isort:skip  pylint: disable=3rd-party-module-not-gated
+import docker.errors  # isort:skip
 
 log = logging.getLogger(__name__)
 
@@ -39,12 +39,8 @@ class MySQLCombo:
 
     @container_id.default
     def _default_container_id(self):
-        return random_string(
-            "{}-{}-".format(
-                self.mysql_name.replace("/", "-"),
-                self.mysql_version,
-            )
-        )
+        mysql_name = self.mysql_name.replace("/", "-")
+        return random_string(f"{mysql_name}-{self.mysql_version}-")
 
     @mysql_root_passwd.default
     def _default_mysql_root_user_passwd(self):
@@ -147,7 +143,8 @@ def set_container_name_before_start(container):
     This is useful if the container has to be restared and the old
     container, under the same name was left running, but in a bad shape.
     """
-    container.name = random_string("{}-".format(container.name.rsplit("-", 1)[0]))
+    container_name = container.name.rsplit("-", 1)[0]
+    container.name = random_string(f"{container_name}-")
     container.display_name = None
     return container
 
@@ -166,9 +163,7 @@ def mysql_container(salt_factories, mysql_combo):
 
     container = salt_factories.get_container(
         mysql_combo.container_id,
-        "ghcr.io/saltstack/salt-ci-containers/{}:{}".format(
-            mysql_combo.mysql_name, mysql_combo.mysql_version
-        ),
+        f"ghcr.io/saltstack/salt-ci-containers/{mysql_combo.mysql_name}:{mysql_combo.mysql_version}",
         pull_before_start=True,
         skip_on_pull_failure=True,
         skip_if_docker_client_not_connectable=True,
