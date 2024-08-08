@@ -1,7 +1,8 @@
 from unittest.mock import patch
 
 import pytest
-from salt.returners import mysql
+
+from saltext.mysql.returners import mysql
 
 
 def test_returner_with_bytes():
@@ -24,10 +25,6 @@ def test_returner_with_bytes():
 def test_save_load_with_bytes():
     load = {
         "return": b"bytes",
-        "jid": "20221101172203459989",
-    }
-    decoded_load = {
-        "return": "bytes",
         "jid": "20221101172203459989",
     }
     with patch.object(mysql, "_get_serv"):

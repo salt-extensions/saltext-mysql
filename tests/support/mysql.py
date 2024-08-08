@@ -3,12 +3,13 @@ import time
 
 import attr
 import pytest
+from pytestskipmarkers.utils import platform
 from saltfactories.utils import random_string
 
 # This `pytest.importorskip` here actually works because this module
 # is imported into test modules, otherwise, the skipping would just fail
 pytest.importorskip("docker")
-import docker.errors  # isort:skip
+import docker.errors  # isort:skip pylint:disable=wrong-import-position
 
 log = logging.getLogger(__name__)
 
@@ -39,8 +40,12 @@ class MySQLCombo:
 
     @container_id.default
     def _default_container_id(self):
-        mysql_name = self.mysql_name.replace("/", "-")
-        return random_string(f"{mysql_name}-{self.mysql_version}-")
+        return random_string(
+            "{}-{}-".format(  # pylint: disable=consider-using-f-string
+                self.mysql_name.replace("/", "-"),
+                self.mysql_version,
+            )
+        )
 
     @mysql_root_passwd.default
     def _default_mysql_root_user_passwd(self):
@@ -57,7 +62,7 @@ class MySQLCombo:
 
 def get_test_versions():
     test_versions = []
-    name = "mysql/mysql-server"
+    name = "mysql-server"
     for version in ("5.5", "5.6", "5.7", "8.0"):
         test_versions.append(
             MySQLImage(
@@ -67,7 +72,7 @@ def get_test_versions():
             )
         )
     name = "mariadb"
-    for version in ("10.3", "10.4", "10.5", "10.6"):
+    for version in ("10.3", "10.4", "10.5"):
         test_versions.append(
             MySQLImage(
                 name=name,
@@ -76,7 +81,7 @@ def get_test_versions():
             )
         )
     name = "percona"
-    for version in ("5.5", "5.6", "5.7", "8.0"):
+    for version in ("5.6", "5.7", "8.0"):
         test_versions.append(
             MySQLImage(
                 name=name,
@@ -98,6 +103,10 @@ def mysql_image(request):
 
 @pytest.fixture(scope="module")
 def create_mysql_combo(mysql_image):
+    if platform.is_fips_enabled():
+        if mysql_image.name in ("mysql-server", "percona") and mysql_image.tag == "8.0":
+            pytest.skip(f"These tests fail on {mysql_image.name}:{mysql_image.tag}")
+
     return MySQLCombo(
         mysql_name=mysql_image.name,
         mysql_version=mysql_image.tag,
@@ -143,8 +152,9 @@ def set_container_name_before_start(container):
     This is useful if the container has to be restared and the old
     container, under the same name was left running, but in a bad shape.
     """
-    container_name = container.name.rsplit("-", 1)[0]
-    container.name = random_string(f"{container_name}-")
+    container.name = random_string(
+        "{}-".format(container.name.rsplit("-", 1)[0])  # pylint: disable=consider-using-f-string
+    )
     container.display_name = None
     return container
 
@@ -163,7 +173,9 @@ def mysql_container(salt_factories, mysql_combo):
 
     container = salt_factories.get_container(
         mysql_combo.container_id,
-        f"ghcr.io/saltstack/salt-ci-containers/{mysql_combo.mysql_name}:{mysql_combo.mysql_version}",
+        "ghcr.io/saltstack/salt-ci-containers/{}:{}".format(  # pylint: disable=consider-using-f-string
+            mysql_combo.mysql_name, mysql_combo.mysql_version
+        ),
         pull_before_start=True,
         skip_on_pull_failure=True,
         skip_if_docker_client_not_connectable=True,

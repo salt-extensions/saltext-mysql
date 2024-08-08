@@ -7,13 +7,15 @@
 """
 
 import logging
+from textwrap import dedent
 from unittest.mock import MagicMock
 from unittest.mock import call
 from unittest.mock import mock_open
 from unittest.mock import patch
 
 import pytest
-import salt.modules.mysql as mysql
+
+from saltext.mysql.modules import mysql
 
 try:
     import pymysql
@@ -72,7 +74,6 @@ __all_privileges__ = [
 ]
 
 pytestmark = [
-    pytest.mark.slow_test,
     pytest.mark.skipif(mysql.MySQLdb is None, reason="No python mysql client installed."),
 ]
 
@@ -776,48 +777,60 @@ def test_sanitize_comment():
     """
     Test comment sanitization
     """
-    input_data = """/*
-    multiline
-    comment
-    */
-    CREATE TABLE test_update (a VARCHAR(25)); # end of line comment
-    # example comment
-    insert into test_update values ("some #hash value");            -- ending comment
-    insert into test_update values ("crazy -- not comment"); -- another ending comment
-    -- another comment type
-    """
-    expected_response = """CREATE TABLE test_update (a VARCHAR(25));
+    input_data = dedent(
+        """
+            /*
+            multiline
+            comment
+            */
+            CREATE TABLE test_update (a VARCHAR(25)); # end of line comment
+            # example comment
+            insert into test_update values ("some #hash value");            -- ending comment
+            insert into test_update values ("crazy -- not comment"); -- another ending comment
+            -- another comment type
+        """
+    ).strip()
+    expected_response = dedent(
+        """\
+        CREATE TABLE test_update (a VARCHAR(25));
 
-insert into test_update values ("some #hash value");
-insert into test_update values ("crazy -- not comment");
-
-"""
+        insert into test_update values ("some #hash value");
+        insert into test_update values ("crazy -- not comment");
+        """
+    )
     output = mysql._sanitize_comments(input_data)
     assert output == expected_response
 
-    input_data = """-- --------------------------------------------------------
-                    -- SQL Commands to set up the pmadb as described in the documentation.
-                    --
-                    -- This file is meant for use with MySQL 5 and above!
-                    --
-                    -- This script expects the user pma to already be existing. If we would put a
-                    -- line here to create them too many users might just use this script and end
-                    -- up with having the same password for the controluser.
-                    --
-                    -- This user "pma" must be defined in config.inc.php (controluser/controlpass)
-                    --
-                    -- Please don't forget to set up the tablenames in config.inc.php
-                    --
-                    -- --------------------------------------------------------
-                    --
-                    CREATE DATABASE IF NOT EXISTS `phpmyadmin`
-                      DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
-                    USE phpmyadmin;
-    """
+    input_data = dedent(
+        """
+            -- --------------------------------------------------------
+            -- SQL Commands to set up the pmadb as described in the documentation.
+            --
+            -- This file is meant for use with MySQL 5 and above!
+            --
+            -- This script expects the user pma to already be existing. If we would put a
+            -- line here to create them too many users might just use this script and end
+            -- up with having the same password for the controluser.
+            --
+            -- This user "pma" must be defined in config.inc.php (controluser/controlpass)
+            --
+            -- Please don't forget to set up the tablenames in config.inc.php
+            --
+            -- --------------------------------------------------------
+            --
+            CREATE DATABASE IF NOT EXISTS `phpmyadmin`
+              DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+            USE phpmyadmin;
+        """
+    ).strip()
 
-    expected_response = """CREATE DATABASE IF NOT EXISTS `phpmyadmin`
-                      DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
-                    USE phpmyadmin;"""
+    expected_response = dedent(
+        """
+        CREATE DATABASE IF NOT EXISTS `phpmyadmin`
+          DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+        USE phpmyadmin;
+        """
+    ).strip()
 
     output = mysql._sanitize_comments(input_data)
     assert output == expected_response

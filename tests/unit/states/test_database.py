@@ -6,7 +6,8 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-import salt.states.mysql_database as mysql_database
+
+from saltext.mysql.states import mysql_database
 
 
 @pytest.fixture

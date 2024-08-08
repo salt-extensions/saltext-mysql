@@ -8,8 +8,9 @@ from unittest.mock import call
 from unittest.mock import patch
 
 import pytest
-import salt.cache.mysql_cache as mysql_cache
 from salt.exceptions import SaltCacheError
+
+from saltext.mysql.cache import mysql_cache
 
 log = logging.getLogger(__name__)
 

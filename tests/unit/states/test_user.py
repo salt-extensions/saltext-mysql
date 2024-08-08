@@ -6,8 +6,9 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-import salt.states.mysql_user as mysql_user
 import salt.utils.data
+
+from saltext.mysql.states import mysql_user
 
 
 @pytest.fixture

@@ -78,6 +78,11 @@ tests = [
     "pytest>=7.2.0",
     "pytest-salt-factories>=1.0.0; sys_platform == 'win32'",
     "pytest-salt-factories[docker]>=1.0.0; sys_platform != 'win32'",
+    "pytest-subtests",
+    "pymysql",
+    # required by pymysql for sha256_password/caching_sha2_password auth method
+    "cryptography",
+    "sqlparse",
 ]
 
 [project.entry-points."salt.loader"]

@@ -1,5 +1,6 @@
 import pytest
-import salt.pillar.mysql as mysql
+
+from saltext.mysql.pillar import mysql
 
 pytestmark = [pytest.mark.skipif(mysql.MySQLdb is None, reason="MySQL-python module not installed")]
 

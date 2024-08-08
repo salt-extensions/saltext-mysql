@@ -8,8 +8,9 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-import salt.modules.mysql as mysql_mod
-import salt.states.mysql_query as mysql_query
+
+from saltext.mysql.modules import mysql as mysql_mod
+from saltext.mysql.states import mysql_query
 
 log = logging.getLogger(__name__)
 
