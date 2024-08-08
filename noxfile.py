@@ -29,7 +29,7 @@ SKIP_REQUIREMENTS_INSTALL = "SKIP_REQUIREMENTS_INSTALL" in os.environ
 EXTRA_REQUIREMENTS_INSTALL = os.environ.get("EXTRA_REQUIREMENTS_INSTALL")
 
 COVERAGE_VERSION_REQUIREMENT = "coverage==5.2"
-SALT_REQUIREMENT = os.environ.get("SALT_REQUIREMENT") or "salt>=3003"
+SALT_REQUIREMENT = os.environ.get("SALT_REQUIREMENT") or "salt>=3006"
 if SALT_REQUIREMENT == "salt==master":
     SALT_REQUIREMENT = "git+https://github.com/saltstack/salt.git@master"
 
@@ -195,7 +195,7 @@ def tests(session):
             "-o",
             str(COVERAGE_REPORT_PROJECT),
             "--omit=tests/*",
-            "--include=src/saltext/saltext_mysql/*",
+            "--include=src/saltext/mysql/*",
         )
         # Generate report for tests code coverage
         session.run(
@@ -203,18 +203,16 @@ def tests(session):
             "xml",
             "-o",
             str(COVERAGE_REPORT_TESTS),
-            "--omit=src/saltext/saltext_mysql/*",
+            "--omit=src/saltext/mysql/*",
             "--include=tests/*",
         )
         try:
-            session.run(
-                "coverage", "report", "--show-missing", "--include=src/saltext/saltext_mysql/*"
-            )
+            session.run("coverage", "report", "--show-missing", "--include=src/saltext/mysql/*")
             # If you also want to display the code coverage report on the CLI
             # for the tests, comment the call above and uncomment the line below
             # session.run(
             #    "coverage", "report", "--show-missing",
-            #    "--include=src/saltext/saltext_mysql/*,tests/*"
+            #    "--include=src/saltext/mysql/*,tests/*"
             # )
         finally:
             # Move the coverage DB to artifacts/coverage in order for it to be archived by CI
@@ -525,5 +523,5 @@ def gen_api_docs(session):
         "-o",
         "docs/ref/",
         "src/saltext",
-        "src/saltext/saltext_mysql/config/schemas",
+        "src/saltext/mysql/config/schemas",
     )

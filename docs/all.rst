@@ -1,7 +1,7 @@
 .. _all the states/modules:
 
-Complete List of saltext-mysql
-==============================
+Complete List of mysql
+======================
 
 
 .. toctree::

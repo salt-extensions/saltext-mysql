@@ -1,5 +1,5 @@
-Welcome to saltext-mysql Documentation!
-=======================================
+Welcome to mysql Documentation!
+===============================
 
 .. toctree::
   :maxdepth: 2
