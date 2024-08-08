@@ -36,7 +36,7 @@ ignore_errors = True
 
 [paths]
 source =
-  saltext/saltext_mysql
-  src/saltext/saltext_mysql
+  saltext/mysql
+  src/saltext/mysql
 testsuite =
   tests/

@@ -19,17 +19,17 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.error_on_missing_interpreters = False
 
 # Python versions to test against
-PYTHON_VERSIONS = ("3", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10")
+PYTHON_VERSIONS = ("3", "3.8", "3.9", "3.10", "3.11", "3.12")
 # Be verbose when running under a CI context
 CI_RUN = (
     os.environ.get("JENKINS_URL") or os.environ.get("CI") or os.environ.get("DRONE") is not None
 )
 PIP_INSTALL_SILENT = CI_RUN is False
-SKIP_REQUIREMENTS_INSTALL = "SKIP_REQUIREMENTS_INSTALL" in os.environ
+SKIP_REQUIREMENTS_INSTALL = os.environ.get("SKIP_REQUIREMENTS_INSTALL", "0") == "1"
 EXTRA_REQUIREMENTS_INSTALL = os.environ.get("EXTRA_REQUIREMENTS_INSTALL")
 
-COVERAGE_VERSION_REQUIREMENT = "coverage==5.2"
-SALT_REQUIREMENT = os.environ.get("SALT_REQUIREMENT") or "salt>=3003"
+COVERAGE_REQUIREMENT = os.environ.get("COVERAGE_REQUIREMENT") or "coverage==7.5.1"
+SALT_REQUIREMENT = os.environ.get("SALT_REQUIREMENT") or "salt>=3006"
 if SALT_REQUIREMENT == "salt==master":
     SALT_REQUIREMENT = "git+https://github.com/saltstack/salt.git@master"
 
@@ -70,8 +70,8 @@ def _get_session_python_version_info(session):
 
 def _get_pydir(session):
     version_info = _get_session_python_version_info(session)
-    if version_info < (3, 5):
-        session.error("Only Python >= 3.5 is supported")
+    if version_info < (3, 8):
+        session.error("Only Python >= 3.8 is supported")
     return f"py{version_info[0]}.{version_info[1]}"
 
 
@@ -89,9 +89,7 @@ def _install_requirements(
         # Always have the wheel package installed
         session.install("--progress-bar=off", "wheel", silent=PIP_INSTALL_SILENT)
         if install_coverage_requirements:
-            session.install(
-                "--progress-bar=off", COVERAGE_VERSION_REQUIREMENT, silent=PIP_INSTALL_SILENT
-            )
+            session.install("--progress-bar=off", COVERAGE_REQUIREMENT, silent=PIP_INSTALL_SILENT)
 
         if install_salt:
             session.install("--progress-bar=off", SALT_REQUIREMENT, silent=PIP_INSTALL_SILENT)
@@ -195,7 +193,7 @@ def tests(session):
             "-o",
             str(COVERAGE_REPORT_PROJECT),
             "--omit=tests/*",
-            "--include=src/saltext/saltext_mysql/*",
+            "--include=src/saltext/mysql/*",
         )
         # Generate report for tests code coverage
         session.run(
@@ -203,18 +201,16 @@ def tests(session):
             "xml",
             "-o",
             str(COVERAGE_REPORT_TESTS),
-            "--omit=src/saltext/saltext_mysql/*",
+            "--omit=src/saltext/mysql/*",
             "--include=tests/*",
         )
         try:
-            session.run(
-                "coverage", "report", "--show-missing", "--include=src/saltext/saltext_mysql/*"
-            )
+            session.run("coverage", "report", "--show-missing", "--include=src/saltext/mysql/*")
             # If you also want to display the code coverage report on the CLI
             # for the tests, comment the call above and uncomment the line below
             # session.run(
             #    "coverage", "report", "--show-missing",
-            #    "--include=src/saltext/saltext_mysql/*,tests/*"
+            #    "--include=src/saltext/mysql/*,tests/*"
             # )
         finally:
             # Move the coverage DB to artifacts/coverage in order for it to be archived by CI
@@ -525,5 +521,5 @@ def gen_api_docs(session):
         "-o",
         "docs/ref/",
         "src/saltext",
-        "src/saltext/saltext_mysql/config/schemas",
+        "src/saltext/mysql/config/schemas",
     )
