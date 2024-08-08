@@ -137,6 +137,7 @@ To override individual configuration items, append --return_kwargs '{"key:": "va
     salt '*' test.ping --return mysql --return_kwargs '{"db": "another-salt"}'
 
 """
+
 import logging
 import sys
 from contextlib import contextmanager
@@ -146,10 +147,6 @@ import salt.returners
 import salt.utils.data
 import salt.utils.job
 import salt.utils.json
-
-# Let's not allow PyLint complain about string substitution
-# pylint: disable=W1321,E1321
-
 
 try:
     # Trying to import MySQLdb
@@ -512,7 +509,7 @@ def _purge_jobs(timestamp):
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
             log.error(
-                "mysql returner archiver was unable to delete contents of table" " 'salt_returns'"
+                "mysql returner archiver was unable to delete contents of table 'salt_returns'"
             )
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
@@ -523,7 +520,7 @@ def _purge_jobs(timestamp):
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
             log.error(
-                "mysql returner archiver was unable to delete contents of table" " 'salt_events'"
+                "mysql returner archiver was unable to delete contents of table 'salt_events'"
             )
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
@@ -575,9 +572,7 @@ def _archive_jobs(timestamp):
             cur.execute(sql, (timestamp,))
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
-            log.error(
-                "mysql returner archiver was unable to copy contents of table" " 'salt_returns'"
-            )
+            log.error("mysql returner archiver was unable to copy contents of table 'salt_returns'")
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
 
@@ -588,9 +583,7 @@ def _archive_jobs(timestamp):
             cur.execute(sql, (timestamp,))
             cur.execute("COMMIT")
         except MySQLdb.Error as e:
-            log.error(
-                "mysql returner archiver was unable to copy contents of table" " 'salt_events'"
-            )
+            log.error("mysql returner archiver was unable to copy contents of table 'salt_events'")
             log.error(str(e))
             raise salt.exceptions.SaltRunnerError(str(e))
 

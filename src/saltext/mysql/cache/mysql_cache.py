@@ -50,6 +50,7 @@ value to ``mysql``:
 .. _`python-mysql documentation`: http://python-mysql.readthedocs.io/en/latest/
 
 """
+
 import copy
 import logging
 import time
@@ -69,7 +70,6 @@ try:
     # It will never be thrown/used, it is defined to support the pymysql error below
     class InterfaceError(Exception):
         pass
-
 
 except ImportError:
     try:
@@ -158,7 +158,7 @@ def run_query(conn, query, args=None, retries=3):
             query = query[:150] + "<...>"
         raise SaltCacheError(
             "Error running {}{}: {}".format(query, f"- args: {args}" if args else "", e)
-        )
+        ) from e
 
 
 def _create_table():

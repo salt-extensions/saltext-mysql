@@ -44,6 +44,7 @@ Complete example
             as_list: True
             with_lists: [1,3]
 """
+
 import logging
 from contextlib import contextmanager
 
@@ -100,10 +101,10 @@ class MySQLExtPillar(SqlBaseExtPillar):
         }
         _options = {}
         _opts = __opts__.get("mysql", {})
-        for attr in defaults:
+        for attr, default in defaults.items():
             if attr not in _opts:
                 log.debug("Using default for MySQL %s", attr)
-                _options[attr] = defaults[attr]
+                _options[attr] = default
                 continue
             _options[attr] = _opts[attr]
         return _options

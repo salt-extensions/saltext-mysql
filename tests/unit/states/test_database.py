@@ -1,6 +1,7 @@
 """
 This test checks mysql_database salt state
 """
+
 from unittest.mock import MagicMock
 from unittest.mock import patch
 

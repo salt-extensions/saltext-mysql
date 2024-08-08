@@ -27,6 +27,7 @@ Module to provide MySQL compatibility to salt.
     CLI by using the arguments defined :mod:`here <salt.states.mysql_user>`.
     Additionally, it is now possible to setup a user with no password.
 """
+
 import copy
 import hashlib
 import logging
@@ -46,7 +47,9 @@ try:
     import MySQLdb.converters
     import MySQLdb.cursors
     from MySQLdb import OperationalError
-    from MySQLdb.constants import CLIENT, FIELD_TYPE, FLAG
+    from MySQLdb.constants import CLIENT
+    from MySQLdb.constants import FIELD_TYPE
+    from MySQLdb.constants import FLAG
 except ImportError:
     try:
         # MySQLdb import failed, try to import PyMySQL
@@ -57,7 +60,9 @@ except ImportError:
         import MySQLdb.converters
         import MySQLdb.cursors
         from MySQLdb import OperationalError
-        from MySQLdb.constants import CLIENT, FIELD_TYPE, FLAG
+        from MySQLdb.constants import CLIENT
+        from MySQLdb.constants import FIELD_TYPE
+        from MySQLdb.constants import FLAG
     except ImportError:
         MySQLdb = None
 
@@ -261,8 +266,10 @@ def __virtual__():
 
 
 def __mysql_hash_password(password):
-    _password = hashlib.sha1(password.encode()).digest()
-    _password = f"*{hashlib.sha1(_password).hexdigest().upper()}"
+    # It's actually used for security purposes, but that's the way
+    # the MySQL native password plugin works and is why it's deprecated
+    _password = hashlib.sha1(password.encode()).digest()  # nosec
+    _password = f"*{hashlib.sha1(_password).hexdigest().upper()}"  # nosec
     return _password
 
 
@@ -751,7 +758,7 @@ def query(database, query, **connection_args):
 
     .. code-block:: python
 
-        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1L}
+        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1l}
 
     CLI Example:
 
@@ -767,11 +774,11 @@ def query(database, query, **connection_args):
             "columns": ("id", "name", "cash"),
             "query time": {"human": "1.0ms", "raw": "0.001"},
             "results": (
-                (1L, "User 1", Decimal("110.000000")),
-                (2L, "User 2", Decimal("215.636756")),
-                (3L, "User 3", Decimal("0.040000")),
+                (1l, "User 1", Decimal("110.000000")),
+                (2l, "User 2", Decimal("215.636756")),
+                (3l, "User 3", Decimal("0.040000")),
             ),
-            "rows returned": 3L,
+            "rows returned": 3l,
         }
 
     CLI Example:
@@ -784,7 +791,7 @@ def query(database, query, **connection_args):
 
     .. code-block:: python
 
-        {"query time": {"human": "25.6ms", "raw": "0.02563"}, "rows affected": 1L}
+        {"query time": {"human": "25.6ms", "raw": "0.02563"}, "rows affected": 1l}
 
     CLI Example:
 
@@ -796,7 +803,7 @@ def query(database, query, **connection_args):
 
     .. code-block:: python
 
-        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1L}
+        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1l}
 
     Jinja Example: Run a query on ``mydb`` and use row 0, column 0's data.
 
@@ -898,7 +905,7 @@ def file_query(database, file_name, **connection_args):
 
     .. code-block:: python
 
-        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1L}
+        {"query time": {"human": "39.0ms", "raw": "0.03899"}, "rows affected": 1l}
 
     """
     if not HAS_SQLPARSE:
@@ -1673,7 +1680,7 @@ def _mysql_user_create(
                 args["password"] = password_hash
             else:
                 log.error(
-                    "password or password_hash must be specified, unless " "allow_passwordless=True"
+                    "password or password_hash must be specified, unless allow_passwordless=True"
                 )
                 qry = False
     return qry, args
@@ -1718,7 +1725,7 @@ def _mariadb_user_create(
                 args["password"] = password_hash
             else:
                 log.error(
-                    "password or password_hash must be specified, unless " "allow_passwordless=True"
+                    "password or password_hash must be specified, unless allow_passwordless=True"
                 )
                 qry = False
     return qry, args
@@ -1888,7 +1895,7 @@ def _mysql_user_chpass(
         password_sql = "%(password)s"
         args["password"] = password_hash
     elif not salt.utils.data.is_true(allow_passwordless):
-        log.error("password or password_hash must be specified, unless " "allow_passwordless=True")
+        log.error("password or password_hash must be specified, unless allow_passwordless=True")
         return False
     else:
         password_sql = "''"
@@ -1964,7 +1971,7 @@ def _mariadb_user_chpass(
         password_sql = "%(password)s"
         args["password"] = password_hash
     elif not salt.utils.data.is_true(allow_passwordless):
-        log.error("password or password_hash must be specified, unless " "allow_passwordless=True")
+        log.error("password or password_hash must be specified, unless allow_passwordless=True")
         return False
     else:
         password_sql = "''"
@@ -2290,7 +2297,7 @@ def __grant_normalize(grant):
     exploded_grants = __grant_split(grant)
     for chkgrant, _ in exploded_grants:
         if chkgrant.strip().upper() not in __grants__:
-            raise Exception(f"Invalid grant : '{chkgrant}'")
+            raise ValueError(f"Invalid grant : '{chkgrant}'")
 
     return grant
 
@@ -2310,7 +2317,7 @@ def __ssl_option_sanitize(ssl_option):
         normal_key = key.strip().upper()
 
         if normal_key not in __ssl_options__:
-            raise Exception(f"Invalid SSL option : '{key}'")
+            raise ValueError(f"Invalid SSL option : '{key}'")
 
         if normal_key in __ssl_options_parameterized__:
             # SSL option parameters (cipher, issuer, subject) are pasted directly to SQL so
@@ -2352,7 +2359,7 @@ def __grant_generate(
         if dbc != "*":
             # _ and % are authorized on GRANT queries and should get escaped
             # on the db name, but only if not requesting a table level grant
-            dbc = quote_identifier(dbc, for_grants=(table == "*"))
+            dbc = quote_identifier(dbc, for_grants=table == "*")
         if table != "*":
             table = quote_identifier(table)
     # identifiers cannot be used as values, and same thing for grants
@@ -2590,8 +2597,8 @@ def grant_revoke(
     if dbc != "*":
         # _ and % are authorized on GRANT queries and should get escaped
         # on the db name, but only if not requesting a table level grant
-        s_database = quote_identifier(dbc, for_grants=(table == "*"))
-    if dbc == "*":
+        s_database = quote_identifier(dbc, for_grants=table == "*")
+    else:
         # add revoke for *.*
         # before the modification query send to mysql will looks like
         # REVOKE SELECT ON `*`.* FROM %(user)s@%(host)s
@@ -2695,7 +2702,6 @@ def __do_query_into_hash(conn, sql_str):
         cursor = conn.cursor()
     except MySQLdb.MySQLError:
         log.error("%s: Can't get cursor for SQL->%s", mod, sql_str)
-        cursor.close()
         log.debug("%s-->", mod)
         return rtn_results
 
@@ -3037,7 +3043,7 @@ def plugin_status(name, **connection_args):
     if dbc is None:
         return ""
     cur = dbc.cursor()
-    qry = "SELECT PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME =" " %(name)s"
+    qry = "SELECT PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME = %(name)s"
     args = {}
     args["name"] = name
 

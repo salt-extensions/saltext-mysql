@@ -5,9 +5,10 @@
     tests.unit.modules.mysql
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
+
 import logging
-from unittest.mock import call
 from unittest.mock import MagicMock
+from unittest.mock import call
 from unittest.mock import mock_open
 from unittest.mock import patch
 

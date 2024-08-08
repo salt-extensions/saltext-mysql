@@ -39,6 +39,7 @@ This state is not able to grant permissions for the user. See
 :py:mod:`salt.states.mysql_grants` for further instructions.
 
 """
+
 import sys
 
 import salt.utils.data

@@ -13,6 +13,7 @@ Databases can be set as either absent or present.
     frank:
       mysql_database.present
 """
+
 import logging
 import sys
 

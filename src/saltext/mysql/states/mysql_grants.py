@@ -44,6 +44,7 @@ instructions.
        - database: somedb.sometable
        - user: joe
 """
+
 import sys
 
 

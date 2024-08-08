@@ -18,6 +18,7 @@ Its output may be stored in a file or in a grain.
         - query:    "SELECT * FROM table;"
         - output:   "/tmp/query_id.txt"
 """
+
 import os.path
 import sys
 
