@@ -38,6 +38,7 @@ requires-python = ">= 3.8"
 dynamic = ["version"]
 dependencies = [
     "salt>=3006",
+    "sqlparse",
 ]
 
 [project.readme]
@@ -79,10 +80,16 @@ tests = [
     "pytest-salt-factories>=1.0.0; sys_platform == 'win32'",
     "pytest-salt-factories[docker]>=1.0.0; sys_platform != 'win32'",
     "pytest-subtests",
+    "pymysql",  # Let's use a pure Python module for testing.
+    "cryptography",  # required by pymysql for sha256_password/caching_sha2_password auth method
+]
+
+pymysql = [
     "pymysql",
-    # required by pymysql for sha256_password/caching_sha2_password auth method
-    "cryptography",
-    "sqlparse",
+]
+
+mysqlclient = [
+    "mysqlclient",
 ]
 
 [project.entry-points."salt.loader"]
