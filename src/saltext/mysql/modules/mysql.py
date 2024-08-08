@@ -186,6 +186,13 @@ __all_privileges__ = [
     "XA_RECOVER_ADMIN",
 ]
 
+# The empty docstring is needed to ignore the developer note during
+# docs rendering (quick fix). There might be better ways.
+
+"""
+"""
+
+# pylint: disable=pointless-string-statement
 r'''
 DEVELOPER NOTE: ABOUT arguments management, escapes, formats, arguments and
 security of SQL.
