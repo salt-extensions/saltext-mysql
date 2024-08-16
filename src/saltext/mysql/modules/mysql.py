@@ -433,6 +433,7 @@ def _connect(**kwargs):
     _connarg("connection_unix_socket", "unix_socket", get_opts)
     _connarg("connection_default_file", "read_default_file", get_opts)
     _connarg("connection_default_group", "read_default_group", get_opts)
+    _connarg("connection_ssl", "ssl", get_opts)
     # MySQLdb states that this is required for charset usage
     # but in fact it's more than it's internally activated
     # when charset is used, activating use_unicode here would
