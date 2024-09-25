@@ -41,7 +41,7 @@ def test_store():
     """
 
     mock_connect_client = MagicMock()
-    with patch.object(mysql_cache, "_init_client") as mock_init_client:
+    with patch.object(mysql_cache, "_init_client"):
         with patch.dict(
             mysql_cache.__context__,
             {
@@ -96,7 +96,7 @@ def test_fetch():
     Tests that the fetch function reads the data from the serializer for storage.
     """
 
-    with patch.object(mysql_cache, "_init_client") as mock_init_client:
+    with patch.object(mysql_cache, "_init_client"):
         with patch("MySQLdb.connect") as mock_connect:
             mock_connection = mock_connect.return_value
             cursor = mock_connection.cursor.return_value
@@ -118,7 +118,7 @@ def test_flush():
     Tests the flush function in mysql_cache.
     """
     mock_connect_client = MagicMock()
-    with patch.object(mysql_cache, "_init_client") as mock_init_client:
+    with patch.object(mysql_cache, "_init_client"):
         with patch.dict(
             mysql_cache.__context__,
             {"mysql_client": mock_connect_client, "mysql_table_name": "salt"},
@@ -155,7 +155,7 @@ def test_init_client():
         mysql_cache.__opts__,
         {"mysql.max_allowed_packet": 100000},
     ):
-        with patch.object(mysql_cache, "_create_table") as mock_create_table:
+        with patch.object(mysql_cache, "_create_table"):
             mysql_cache._init_client()
 
             assert "mysql_table_name" in mysql_cache.__context__
@@ -178,7 +178,7 @@ def test_init_client():
             "mysql.fresh_connection": True,
         },
     ):
-        with patch.object(mysql_cache, "_create_table") as mock_create_table:
+        with patch.object(mysql_cache, "_create_table"):
             mysql_cache._init_client()
 
             assert "mysql_table_name" in mysql_cache.__context__

@@ -114,10 +114,8 @@ def run_file(
         return ret
 
     if any(
-        [
-            query_file.startswith(proto)
-            for proto in ["http://", "https://", "salt://", "s3://", "swift://"]
-        ]
+        query_file.startswith(proto)
+        for proto in ("http://", "https://", "salt://", "s3://", "swift://")
     ):
         query_file = __salt__["cp.cache_file"](query_file, saltenv=saltenv or __env__)
 

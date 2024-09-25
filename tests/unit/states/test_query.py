@@ -166,6 +166,6 @@ def test_run_multiple_statements():
     ), patch(
         "MySQLdb.connect", return_value=MockMySQLConnect()
     ) as mock_connect:
-        ret = mysql_query.run(name, database, query, client_flags=["multi_statements"])
+        mysql_query.run(name, database, query, client_flags=["multi_statements"])
         assert 1 == len(mock_connect.mock_calls)
         assert "client_flag=65536" in str(mock_connect.mock_calls[0])

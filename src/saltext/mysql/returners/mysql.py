@@ -337,6 +337,7 @@ def event_return(events):
             cur.execute(sql, (tag, salt.utils.json.dumps(data), __opts__["id"]))
 
 
+# pylint: disable=unused-argument
 def save_load(jid, load, minions=None):
     """
     Save the load to the specified jid id
