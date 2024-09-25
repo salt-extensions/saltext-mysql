@@ -22,7 +22,7 @@ no_saltext_namespace: false
 package_name: mysql
 project_name: mysql
 python_requires: '3.8'
-relax_pylint: false
+relax_pylint: true
 salt_version: '3006'
 source_url: https://github.com/salt-extensions/saltext-mysql
 ssh_fixtures: false
