@@ -771,6 +771,7 @@ def test_209_process_results_complexity_collision_mismatch_depth_weird_order():
     assert {1: {2: {3: 5}}} == return_data.result
 
 
+# pylint: disable=invalid-name
 def test_20A_process_results_complexity_as_list_vary():
     return_data = mysql.MySQLExtPillar()
     return_data.as_list = True

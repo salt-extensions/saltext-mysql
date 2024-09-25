@@ -376,7 +376,7 @@ def _connect(**kwargs):
     """
     wrap authentication credentials here
     """
-    connargs = dict()
+    connargs = {}
 
     def _connarg(name, key=None, get_opts=True):
         """
@@ -568,12 +568,12 @@ def _grant_to_tokens(grant):
             position_tracker += 1
             continue
 
-        elif token == "TO" and phrase == "tables":
+        if token == "TO" and phrase == "tables":
             phrase = "user"
             position_tracker += 1
             continue
 
-        elif token == "@" and phrase == "pre-host":
+        if token == "@" and phrase == "pre-host":
             phrase = "host"
             position_tracker += 1
             continue
@@ -615,11 +615,10 @@ def _grant_to_tokens(grant):
         elif phrase == "user":
             if dict_mode:
                 break
-            else:
-                user += token
-                # Read-ahead
-                if exploded_grant[position_tracker + 1] == "@":
-                    phrase = "pre-host"
+            user += token
+            # Read-ahead
+            if exploded_grant[position_tracker + 1] == "@":
+                phrase = "pre-host"
 
         elif phrase == "host":
             host = token
@@ -635,7 +634,7 @@ def _grant_to_tokens(grant):
     except UnboundLocalError:
         host = ""
 
-    return dict(user=user, host=host, grant=grant_tokens, database=database)
+    return {"user": user, "host": host, "grant": grant_tokens, "database": database}
 
 
 def _resolve_grant_aliases(grants, server_version):
@@ -1468,6 +1467,7 @@ def _mysql_user_exists(
     return qry, args
 
 
+# pylint: disable=unused-argument
 def _mariadb_user_exists(
     user,
     host="localhost",
@@ -1528,7 +1528,6 @@ def user_exists(
         salt '*' mysql.user_exists 'username' passwordless=True
         salt '*' mysql.user_exists 'username' password_column='authentication_string'
     """
-    run_verify = False
     server_version = salt.utils.data.decode(version(**connection_args))
     if not server_version and password:
         # Did we fail to connect with the user we are checking
@@ -2453,7 +2452,7 @@ def grant_exists(
             and "MariaDB" not in server_version
             and database == "*.*"
         ):
-            grant = ",".join([i for i in __all_privileges__])
+            grant = ",".join(__all_privileges__)
         else:
             grant = "ALL PRIVILEGES"
 
@@ -2495,9 +2494,7 @@ def grant_exists(
             _grant_tokens = {}
             _target_tokens = {}
 
-            _grant_matches = [
-                True if i in grant_tokens["grant"] else False for i in target_tokens["grant"]
-            ]
+            _grant_matches = [i in grant_tokens["grant"] for i in target_tokens["grant"]]
 
             for item in ["user", "database", "host"]:
                 _grant_tokens[item] = (
@@ -2687,7 +2684,7 @@ def processlist(**connection_args):
     for _ in range(cur.rowcount):
         row = cur.fetchone()
         idx_r = {}
-        for idx_j, value_j in enumerate(hdr):
+        for idx_j, _ in enumerate(hdr):
             idx_r[hdr[idx_j]] = row[idx_j]
         ret.append(idx_r)
     cur.close()

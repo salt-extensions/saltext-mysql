@@ -521,7 +521,7 @@ def test_alter_db():
         "name": "my_test",
     }
     mock = MagicMock(return_value=mock_get_db)
-    with patch.object(mysql, "db_get", return_value=mock) as mock_db_get:
+    with patch.object(mysql, "db_get", return_value=mock):
         _test_call(
             mysql.alter_db,
             "ALTER DATABASE `my_test` CHARACTER SET utf8 COLLATE utf8_unicode_ci;",
@@ -581,8 +581,7 @@ def test_grant_exists_true():
         "GRANT SELECT ON `testdb`.`testtablethree` TO 'testuser'@'%'",
     ]
     with patch.object(mysql, "version", return_value="5.6.41"):
-        mock = MagicMock(return_value=mock_grants)
-        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants):
             ret = mysql.grant_exists(
                 "SELECT, INSERT, UPDATE", "testdb.testtableone", "testuser", "%"
             )
@@ -601,8 +600,7 @@ def test_grant_exists_false():
         "GRANT SELECT ON `testdb`.`testtablethree` TO 'testuser'@'%'",
     ]
     with patch.object(mysql, "version", return_value="5.6.41"):
-        mock = MagicMock(return_value=mock_grants)
-        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants):
             ret = mysql.grant_exists("SELECT", "testdb.testtabletwo", "testuser", "%")
             assert not ret
 
@@ -613,21 +611,18 @@ def test_grant_exists_all():
     """
     mock_grants = ["GRANT ALL PRIVILEGES ON testdb.testtableone TO `testuser`@`%`"]
     with patch.object(mysql, "version", return_value="8.0.10"):
-        mock = MagicMock(return_value=mock_grants)
-        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants):
             ret = mysql.grant_exists("ALL", "testdb.testtableone", "testuser", "%")
             assert ret
 
     with patch.object(mysql, "version", return_value="8.0.10"):
-        mock = MagicMock(return_value=mock_grants)
-        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants):
             ret = mysql.grant_exists("all privileges", "testdb.testtableone", "testuser", "%")
             assert ret
 
     mock_grants = ["GRANT ALL PRIVILEGES ON testdb.testtableone TO `testuser`@`%`"]
     with patch.object(mysql, "version", return_value="5.6.41"):
-        mock = MagicMock(return_value=mock_grants)
-        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants):
             ret = mysql.grant_exists("ALL PRIVILEGES", "testdb.testtableone", "testuser", "%")
             assert ret
 
@@ -636,14 +631,12 @@ def test_grant_exists_all():
         "GRANT BACKUP_ADMIN,BINLOG_ADMIN,CONNECTION_ADMIN,ENCRYPTION_KEY_ADMIN,GROUP_REPLICATION_ADMIN,PERSIST_RO_VARIABLES_ADMIN,REPLICATION_SLAVE_ADMIN,RESOURCE_GROUP_ADMIN,RESOURCE_GROUP_USER,ROLE_ADMIN,SET_USER_ID,SYSTEM_VARIABLES_ADMIN,XA_RECOVER_ADMIN ON *.* TO `testuser`@`%`",
     ]
     with patch.object(mysql, "version", return_value="8.0.10"):
-        mock = MagicMock(return_value=mock_grants)
-        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants):
             ret = mysql.grant_exists("ALL", "*.*", "testuser", "%")
             assert ret
 
     with patch.object(mysql, "version", return_value="8.0.10"):
-        mock = MagicMock(return_value=mock_grants)
-        with patch.object(mysql, "user_grants", return_value=mock_grants) as mock_user_grants:
+        with patch.object(mysql, "user_grants", return_value=mock_grants):
             ret = mysql.grant_exists("all privileges", "*.*", "testuser", "%")
             assert ret
 
@@ -917,7 +910,7 @@ def test__connect_pymysql_exception():
                 1698, "Access denied for user 'root'@'localhost'"
             ),
         ):
-            ret = mysql._connect()
+            mysql._connect()
             assert "mysql.error" in mysql.__context__
             assert (
                 mysql.__context__["mysql.error"]
@@ -934,7 +927,7 @@ def test__connect_mysqldb_exception():
             "MySQLdb.connect",
             side_effect=mysql.OperationalError(1698, "Access denied for user 'root'@'localhost'"),
         ):
-            ret = mysql._connect()
+            mysql._connect()
             assert "mysql.error" in mysql.__context__
             assert (
                 mysql.__context__["mysql.error"]
