@@ -1,4 +1,4 @@
-``saltext-mysql``: Integrate Salt with Mysql
+``saltext-mysql``: Integrate Salt with MySQL
 ============================================
 
 Salt Extension for interacting with MySQL
