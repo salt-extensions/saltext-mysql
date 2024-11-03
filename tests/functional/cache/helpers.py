@@ -128,10 +128,13 @@ def run_common_cache_tests(subtests, cache):
         assert before_storage <= timestamp <= after_storage
 
     with subtests.test("If the module raises SaltCacheError then it should make it out of updated"):
-        with patch.dict(
-            cache.modules._dict,
-            {f"{cache.driver}.updated": MagicMock(side_effect=SaltCacheError)},
-        ), pytest.raises(SaltCacheError):
+        with (
+            patch.dict(
+                cache.modules._dict,
+                {f"{cache.driver}.updated": MagicMock(side_effect=SaltCacheError)},
+            ),
+            pytest.raises(SaltCacheError),
+        ):
             cache.updated(bank="kaboom", key="oops")
 
     with subtests.test("cache.cache right after a value is cached should not update the cache"):
@@ -148,12 +151,15 @@ def run_common_cache_tests(subtests, cache):
 
         assert result == fetch_result == expected_value
 
-    with subtests.test(
-        "cache.cache should update the value with the result of fun when value was updated longer than expiration",
-    ), patch(
-        "salt.cache.Cache.updated",
-        return_value=42,  # Dec 31, 1969... time to update the cache!
-        autospec=True,
+    with (
+        subtests.test(
+            "cache.cache should update the value with the result of fun when value was updated longer than expiration",
+        ),
+        patch(
+            "salt.cache.Cache.updated",
+            return_value=42,  # Dec 31, 1969... time to update the cache!
+            autospec=True,
+        ),
     ):
         expected_value = "this is the return value woo woo woo"
         cache.store(bank=bank, key=good_key, data="not this value")
@@ -164,12 +170,15 @@ def run_common_cache_tests(subtests, cache):
 
         assert cache_result == fetch_result == expected_value
 
-    with subtests.test(
-        "cache.cache should update the value with all of the outputs from loop_fun if loop_fun was provided",
-    ), patch(
-        "salt.cache.Cache.updated",
-        return_value=42,
-        autospec=True,
+    with (
+        subtests.test(
+            "cache.cache should update the value with all of the outputs from loop_fun if loop_fun was provided",
+        ),
+        patch(
+            "salt.cache.Cache.updated",
+            return_value=42,
+            autospec=True,
+        ),
     ):
         expected_value = "SOME HUGE STRING OKAY?"
 
@@ -185,12 +194,15 @@ def run_common_cache_tests(subtests, cache):
         assert cache_result == fetch_result
         assert "".join(fetch_result) == expected_value
 
-    with subtests.test(
-        "cache.cache should update the value if the stored value is empty but present and expiry is way in the future"
-    ), patch(
-        "salt.cache.Cache.updated",
-        return_value=time.time() * 2,
-        autospec=True,
+    with (
+        subtests.test(
+            "cache.cache should update the value if the stored value is empty but present and expiry is way in the future"
+        ),
+        patch(
+            "salt.cache.Cache.updated",
+            return_value=time.time() * 2,
+            autospec=True,
+        ),
     ):
         # Unclear if this was intended behavior: currently any falsey data will
         # be updated by cache.cache. If this is incorrect, this test should
