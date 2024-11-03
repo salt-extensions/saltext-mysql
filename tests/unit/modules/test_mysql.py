@@ -312,10 +312,13 @@ def test_user_create():
             )
 
     with patch.object(mysql, "version", side_effect=["", "8.0.10", "8.0.10"]):
-        with patch.object(mysql, "user_exists", MagicMock(return_value=False)), patch.object(
-            mysql,
-            "__get_auth_plugin",
-            MagicMock(return_value="mysql_native_password"),
+        with (
+            patch.object(mysql, "user_exists", MagicMock(return_value=False)),
+            patch.object(
+                mysql,
+                "__get_auth_plugin",
+                MagicMock(return_value="mysql_native_password"),
+            ),
         ):
             _test_call(
                 mysql.user_create,

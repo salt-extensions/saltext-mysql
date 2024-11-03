@@ -157,15 +157,14 @@ def test_run_multiple_statements():
 
     mock_t = MagicMock(return_value=True)
 
-    with patch.dict(mysql_query.__salt__, {"mysql.db_exists": mock_t}), patch.dict(
-        mysql_query.__opts__, {"test": False}
-    ), patch.dict(mysql_query.__salt__, {"mysql.query": mysql_mod.query}), patch.dict(
-        mysql_query.__salt__, {"mysql._execute": MagicMock()}
-    ), patch.dict(
-        mysql_mod.__salt__, {"config.option": MagicMock()}
-    ), patch(
-        "MySQLdb.connect", return_value=MockMySQLConnect()
-    ) as mock_connect:
+    with (
+        patch.dict(mysql_query.__salt__, {"mysql.db_exists": mock_t}),
+        patch.dict(mysql_query.__opts__, {"test": False}),
+        patch.dict(mysql_query.__salt__, {"mysql.query": mysql_mod.query}),
+        patch.dict(mysql_query.__salt__, {"mysql._execute": MagicMock()}),
+        patch.dict(mysql_mod.__salt__, {"config.option": MagicMock()}),
+        patch("MySQLdb.connect", return_value=MockMySQLConnect()) as mock_connect,
+    ):
         mysql_query.run(name, database, query, client_flags=["multi_statements"])
         assert 1 == len(mock_connect.mock_calls)
         assert "client_flag=65536" in str(mock_connect.mock_calls[0])
