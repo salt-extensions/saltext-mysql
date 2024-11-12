@@ -8,8 +8,12 @@ infrastructure. All is needed for this plugin is a working MySQL server.
 
 .. warning::
 
-    The mysql_cache.database and mysql_cache.table_name will be directly added into certain
+    The mysql.database and mysql.table_name will be directly added into certain
     queries. Salt treats these as trusted input.
+
+The module requires the database (default ``salt_cache``) to exist but creates
+its own table if needed. The keys are indexed using the ``bank`` and
+``etcd_key`` columns.
 
 To enable this cache plugin, the master will need the python client for
 MySQL installed. This can be easily installed with pip:
@@ -23,31 +27,14 @@ could be set in the master config. These are the defaults:
 
 .. code-block:: yaml
 
-    mysql_cache.host: 127.0.0.1
-    mysql_cache.port: 3306
-    mysql_cache.user: None
-    mysql_cache.password: None
-    mysql_cache.database: salt_cache
-    mysql_cache.table_name: cache
+    mysql.host: 127.0.0.1
+    mysql.port: 2379
+    mysql.user: None
+    mysql.password: None
+    mysql.database: salt_cache
+    mysql.table_name: cache
     # This may be enabled to create a fresh connection on every call
-    mysql_cache.fresh_connection: false
-
-Use the following mysql database schema:
-
-.. code-block:: sql
-
-    CREATE DATABASE salt_cache;
-    USE salt_cache;
-
-    CREATE TABLE IF NOT EXISTS cache (
-          bank VARCHAR(255),
-          cache_key VARCHAR(255),
-          data MEDIUMBLOB,
-          last_update TIMESTAMP NOT NULL
-                      DEFAULT CURRENT_TIMESTAMP
-                      ON UPDATE CURRENT_TIMESTAMP,
-          PRIMARY KEY(bank, cache_key)
-        );
+    mysql.fresh_connection: false
 
 To use the mysql as a minion data cache backend, set the master ``cache`` config
 value to ``mysql``:
@@ -55,6 +42,7 @@ value to ``mysql``:
 .. code-block:: yaml
 
     cache: mysql
+
 
 .. _`MySQL documentation`: https://github.com/coreos/mysql
 """
@@ -94,6 +82,8 @@ except ImportError:
         MySQLdb = None
 
 
+_DEFAULT_DATABASE_NAME = "salt_cache"
+_DEFAULT_CACHE_TABLE_NAME = "cache"
 _RECONNECT_INTERVAL_SEC = 0.050
 
 log = logging.getLogger(__name__)
@@ -167,6 +157,69 @@ def run_query(conn, query, args=None, retries=3):
         ) from e
 
 
+def _create_table():
+    """
+    Create table if needed
+    """
+    # Explicitly check if the table already exists as the library logs a
+    # warning on CREATE TABLE
+    query = """SELECT COUNT(TABLE_NAME) FROM information_schema.tables
+        WHERE table_schema = %s AND table_name = %s"""
+    cur, _ = run_query(
+        __context__.get("mysql_client"),
+        query,
+        args=(__context__["mysql_kwargs"]["db"], __context__["mysql_table_name"]),
+    )
+    r = cur.fetchone()
+    cur.close()
+    if r[0] == 1:
+        query = """
+        SELECT COUNT(TABLE_NAME)
+        FROM
+            information_schema.columns
+        WHERE
+            table_schema = %s
+            AND table_name = %s
+            AND column_name = 'last_update'
+        """
+        cur, _ = run_query(
+            __context__["mysql_client"],
+            query,
+            args=(__context__["mysql_kwargs"]["db"], __context__["mysql_table_name"]),
+        )
+        r = cur.fetchone()
+        cur.close()
+        if r[0] == 1:
+            return
+        else:
+            query = """
+            ALTER TABLE {}.{}
+            ADD COLUMN last_update TIMESTAMP NOT NULL
+                                   DEFAULT CURRENT_TIMESTAMP
+                                   ON UPDATE CURRENT_TIMESTAMP
+            """.format(
+                __context__["mysql_kwargs"]["db"], __context__["mysql_table_name"]
+            )
+            cur, _ = run_query(__context__["mysql_client"], query)
+            cur.close()
+            return
+
+    query = """CREATE TABLE IF NOT EXISTS {} (
+      bank CHAR(255),
+      etcd_key CHAR(255),
+      data MEDIUMBLOB,
+      last_update TIMESTAMP NOT NULL
+                  DEFAULT CURRENT_TIMESTAMP
+                  ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY(bank, etcd_key)
+    );""".format(
+        __context__["mysql_table_name"]
+    )
+    log.info("mysql_cache: creating table %s", __context__["mysql_table_name"])
+    cur, _ = run_query(__context__.get("mysql_client"), query)
+    cur.close()
+
+
 def _init_client():
     """Initialize connection and create table if needed"""
     if __context__.get("mysql_client") is not None:
@@ -175,22 +228,22 @@ def _init_client():
     opts = copy.deepcopy(__opts__)
     mysql_kwargs = {
         "autocommit": True,
-        "host": opts.pop("mysql_cache.host", "127.0.0.1"),
-        "user": opts.pop("mysql_cache.user", None),
-        "passwd": opts.pop("mysql_cache.password", None),
-        "db": opts.pop("mysql_cache.database", "salt_cache"),
-        "port": opts.pop("mysql_cache.port", 3306),
-        "unix_socket": opts.pop("mysql_cache.unix_socket", None),
-        "connect_timeout": opts.pop("mysql_cache.connect_timeout", None),
+        "host": opts.pop("mysql.host", "127.0.0.1"),
+        "user": opts.pop("mysql.user", None),
+        "passwd": opts.pop("mysql.password", None),
+        "db": opts.pop("mysql.database", _DEFAULT_DATABASE_NAME),
+        "port": opts.pop("mysql.port", 3306),
+        "unix_socket": opts.pop("mysql.unix_socket", None),
+        "connect_timeout": opts.pop("mysql.connect_timeout", None),
     }
     mysql_kwargs["autocommit"] = True
 
-    __context__["mysql_table_name"] = opts.pop("mysql_cache.table_name", "cache")
-    __context__["mysql_fresh_connection"] = opts.pop("mysql_cache.fresh_connection", False)
+    __context__["mysql_table_name"] = opts.pop("mysql.table_name", "salt")
+    __context__["mysql_fresh_connection"] = opts.pop("mysql.fresh_connection", False)
 
     # Gather up any additional MySQL configuration options
     for k in opts:
-        if k.startswith("mysql_cache."):
+        if k.startswith("mysql."):
             _key = k.split(".")[1]
             mysql_kwargs[_key] = opts.get(k)
 
@@ -201,8 +254,10 @@ def _init_client():
             mysql_kwargs.pop(k)
     kwargs_copy = mysql_kwargs.copy()
     kwargs_copy["passwd"] = "<hidden>"
-    log.info("Cache mysql: Setting up client with params: %r", kwargs_copy)
+    log.info("mysql_cache: Setting up client with params: %r", kwargs_copy)
     __context__["mysql_kwargs"] = mysql_kwargs
+    # The MySQL client is created later on by run_query
+    _create_table()
 
 
 def store(bank, key, data):
@@ -211,7 +266,7 @@ def store(bank, key, data):
     """
     _init_client()
     data = salt.payload.dumps(data)
-    query = "REPLACE INTO {} (bank, cache_key, data) values(%s,%s,%s)".format(
+    query = "REPLACE INTO {} (bank, etcd_key, data) values(%s,%s,%s)".format(
         __context__["mysql_table_name"]
     )
     args = (bank, key, data)
@@ -227,7 +282,7 @@ def fetch(bank, key):
     Fetch a key value.
     """
     _init_client()
-    query = "SELECT data FROM {} WHERE bank=%s AND cache_key=%s".format(
+    query = "SELECT data FROM {} WHERE bank=%s AND etcd_key=%s".format(
         __context__["mysql_table_name"]
     )
     cur, _ = run_query(__context__.get("mysql_client"), query, args=(bank, key))
@@ -248,7 +303,7 @@ def flush(bank, key=None):
         data = (bank,)
     else:
         data = (bank, key)
-        query += " AND cache_key=%s"
+        query += " AND etcd_key=%s"
 
     cur, _ = run_query(__context__.get("mysql_client"), query, args=data)
     cur.close()
@@ -258,16 +313,19 @@ def list_(bank):
     """
     Return an iterable object containing all entries stored in the specified bank.
     """
+    bank_like = bank + '%'
     _init_client()
-    query = "SELECT bank FROM {}".format(__context__["mysql_table_name"])
-    cur, _ = run_query(__context__.get("mysql_client"), query)
+    banks_query = "SELECT bank FROM {} WHERE bank LIKE %s".format(
+        __context__["mysql_table_name"]
+    )
+    cur, _ = run_query(__context__.get("mysql_client"), banks_query, args=(bank_like,))
     out = [row[0] for row in cur.fetchall()]
     cur.close()
-    minions = []
+    data = []
     for entry in out:
-        minion = entry.replace('minions/', '')
-        minions.append(minion)
-    return minions
+        filtered_entry = entry.split('/')[-1]
+        data.append(filtered_entry)
+    return data
 
 
 def contains(bank, key):
@@ -280,7 +338,7 @@ def contains(bank, key):
         query = "SELECT COUNT(data) FROM {} WHERE bank=%s".format(__context__["mysql_table_name"])
     else:
         data = (bank, key)
-        query = "SELECT COUNT(data) FROM {} WHERE bank=%s AND cache_key=%s".format(
+        query = "SELECT COUNT(data) FROM {} WHERE bank=%s AND etcd_key=%s".format(
             __context__["mysql_table_name"]
         )
     cur, _ = run_query(__context__.get("mysql_client"), query, args=data)
@@ -295,7 +353,7 @@ def updated(bank, key):
     key.
     """
     _init_client()
-    query = "SELECT UNIX_TIMESTAMP(last_update) FROM {} WHERE bank=%s " "AND cache_key=%s".format(
+    query = "SELECT UNIX_TIMESTAMP(last_update) FROM {} WHERE bank=%s " "AND etcd_key=%s".format(
         __context__["mysql_table_name"]
     )
     data = (bank, key)
