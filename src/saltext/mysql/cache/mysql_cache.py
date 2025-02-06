@@ -311,15 +311,36 @@ def flush(bank, key=None):
 
 def ls(bank):
     """
-    Return an iterable object containing all entries stored in the specified
-    bank.
+    Return an iterable object containing all entries stored in the specified bank.
+
+    For hierarchical banks like 'root/sub/dir', if listing 'root', it should return:
+        - Direct entries in 'root'
+        - First path segment of sub-banks (e.g. 'sub' from 'root/sub/dir')
     """
+    bank = bank.rstrip("/")
+    bank_like = bank + "/%"
     _init_client()
-    query = "SELECT etcd_key FROM {} WHERE bank=%s".format(__context__["mysql_table_name"])
-    cur, _ = run_query(__context__.get("mysql_client"), query, args=(bank,))
-    out = [row[0] for row in cur.fetchall()]
+    query = """SELECT bank, etcd_key FROM {} WHERE bank = %s OR bank LIKE %s""".format(
+        __context__["mysql_table_name"]
+    )
+    cur, _ = run_query(__context__.get("mysql_client"), query, args=(bank, bank_like))
+
+    data = set()
+    bank_prefix_len = len(bank) + 1  # +1 for the trailing slash
+
+    for res_bank, res_key in cur.fetchall():
+        if res_bank == bank:
+            # Direct entries in the requested bank
+            data.add(res_key)
+        else:
+            # For sub-banks, get the first path segment after the requested bank
+            sub_path = res_bank[bank_prefix_len:]
+            first_segment = sub_path.split("/")[0]
+            if first_segment:
+                data.add(first_segment)
+
     cur.close()
-    return out
+    return list(data)
 
 
 def contains(bank, key):
