@@ -94,7 +94,7 @@ def run_file(
 
     client_flags:
         A list of client flags to pass to the MySQL connection.
-        https://dev.mysql.com/doc/internals/en/capability-flags.html
+        https://dev.mysql.com/doc/dev/mysql-server/latest/group__group__cs__capabilities__flags.html
 
     """
     ret = {
@@ -267,7 +267,7 @@ def run(
 
     client_flags:
         A list of client flags to pass to the MySQL connection.
-        https://dev.mysql.com/doc/internals/en/capability-flags.html
+        https://dev.mysql.com/doc/dev/mysql-server/latest/group__group__cs__capabilities__flags.html
 
     """
     ret = {
