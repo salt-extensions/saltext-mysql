@@ -228,3 +228,27 @@ def run_common_cache_tests(subtests, cache):
         assert cache_result == fetch_result
         assert fetch_result == expected_result
         assert cache_result == fetch_result == expected_result
+
+    with subtests.test("hierarchical listing should work correctly"):
+        # Store some test data
+        cache.store(bank="root", key="file1", data="data1")
+        cache.store(bank="root/sub/dir", key="foo", data="data2")
+        cache.store(bank="root/sub/dir", key="bar", data="data3")
+        cache.store(bank="root/another_sub/dir", key="baz", data="data4")
+
+        # List root - should get direct entries and first segments of sub-paths
+        root_list = cache.list("root")
+        assert set(root_list) == {"file1", "sub", "another_sub"}
+
+        # List a sub-path
+        sub_list = cache.list("root/sub")
+        assert set(sub_list) == {"dir"}
+
+        # List a full path
+        dir_list = cache.list("root/sub/dir")
+        assert set(dir_list) == {"foo", "bar"}
+
+        # Clean up test data
+        cache.flush(bank="root", key=None)
+        cache.flush(bank="root/sub/dir", key=None)
+        cache.flush(bank="root/another_sub/dir", key=None)
