@@ -79,7 +79,10 @@ rst_prolog = """
 
 # -- General configuration ---------------------------------------------------
 
-linkcheck_ignore = [r"http://localhost:\d+"]
+linkcheck_ignore = [
+    r"http://localhost:\d+",
+    "https://dev.mysql.com/doc/dev/mysql-server/latest/group__group__cs__capabilities__flags.html",
+]
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
