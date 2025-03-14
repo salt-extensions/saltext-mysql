@@ -82,7 +82,7 @@ tests = [
     "pytest>=7.2.0",
     "pytest-salt-factories>=1.0.0; sys_platform == 'win32'",
     "pytest-salt-factories[docker]>=1.0.0; sys_platform != 'win32'",
-<<<<<<< before updating
+    "pytest-instafail",
     "pytest-subtests",
     "pymysql",  # Let's use a pure Python module for testing.
     "cryptography",  # required by pymysql for sha256_password/caching_sha2_password auth method
@@ -94,9 +94,6 @@ pymysql = [
 
 mysqlclient = [
     "mysqlclient",
-=======
-    "pytest-instafail",
->>>>>>> after updating
 ]
 
 [project.entry-points."salt.loader"]
