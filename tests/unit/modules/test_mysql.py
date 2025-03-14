@@ -1,9 +1,9 @@
 """
-    :codeauthor: Mike Place (mp@saltstack.com)
+:codeauthor: Mike Place (mp@saltstack.com)
 
 
-    tests.unit.modules.mysql
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests.unit.modules.mysql
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 
 import logging
