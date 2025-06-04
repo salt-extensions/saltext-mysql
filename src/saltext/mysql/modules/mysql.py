@@ -230,7 +230,7 @@ used with {'myval': 'some user input'}
 So far so good. But this cannot be used for identifier escapes. Identifiers
 are database names, table names and column names. Theses names are not values
 and do not follow the same escape rules (see quote_identifier function for
-details on `_ and % escape policies on identifiers). Using value escaping on
+details on escape policies on identifiers). Using value escaping on
 identifier could fool the SQL engine (badly escaping quotes and not doubling
 ` characters. So for identifiers a call to quote_identifier should be done and
 theses identifiers should then be added in strings with format, but without
@@ -256,7 +256,7 @@ The MySQL way of writing this name is:
 
 value                         : 'f_o%o`b\'a"r' (managed by MySQLdb)
 identifier                    : `f_o%o``b'a"r`
-db identifier in general GRANT: `f\_o\%o``b'a"r`
+db identifier in general GRANT: `f_o\%o``b'a"r`
 db identifier in table GRANT  : `f_o%o``b'a"r`
 in mySQLdb, query with args   : `f_o%%o``b'a"r` (as identifier)
 in mySQLdb, query without args: `f_o%o``b'a"r` (as identifier)
@@ -694,7 +694,7 @@ def _resolve_grant_aliases(grants, server_version):
     return resolved_tokens
 
 
-def quote_identifier(identifier, for_grants=False):
+def quote_identifier(identifier):
     r"""
     Return an identifier name (column, table, database, etc) escaped for MySQL
 
@@ -703,22 +703,13 @@ def quote_identifier(identifier, for_grants=False):
 
     :param identifier: the table, column or database identifier
 
-    :param for_grants: is False by default, when using database names on grant
-     queries you should set it to True to also escape "_" and "%" characters as
-     requested by MySQL. Note that theses characters should only be escaped when
-     requesting grants on the database level (`my\_\%db`.*) but not for table
-     level grants (`my_%db`.`foo`)
-
     CLI Example:
 
     .. code-block:: bash
 
         salt '*' mysql.quote_identifier 'foo`bar'
     """
-    if for_grants:
-        return "`" + identifier.replace("`", "``").replace("_", r"\_").replace("%", r"%%") + "`"
-    else:
-        return "`" + identifier.replace("`", "``").replace("%", "%%") + "`"
+    return "`" + identifier.replace("`", "``").replace("%", r"%%") + "`"
 
 
 def _execute(cur, qry, args=None):
@@ -2365,9 +2356,9 @@ def __grant_generate(
 
     if escape:
         if dbc != "*":
-            # _ and % are authorized on GRANT queries and should get escaped
+            # % is authorized on GRANT queries and should get escaped
             # on the db name, but only if not requesting a table level grant
-            dbc = quote_identifier(dbc, for_grants=table == "*")
+            dbc = quote_identifier(dbc)
         if table != "*":
             table = quote_identifier(table)
     # identifiers cannot be used as values, and same thing for grants
@@ -2601,9 +2592,9 @@ def grant_revoke(
     dbc = db_part[0]
     table = db_part[2]
     if dbc != "*":
-        # _ and % are authorized on GRANT queries and should get escaped
+        # % is authorized on GRANT queries and should get escaped
         # on the db name, but only if not requesting a table level grant
-        s_database = quote_identifier(dbc, for_grants=table == "*")
+        s_database = quote_identifier(dbc)
     else:
         # add revoke for *.*
         # before the modification query send to mysql will looks like
