@@ -2591,17 +2591,18 @@ def grant_revoke(
     db_part = database.rpartition(".")
     dbc = db_part[0]
     table = db_part[2]
-    if dbc != "*":
-        # % is authorized on GRANT queries and should get escaped
-        # on the db name, but only if not requesting a table level grant
-        s_database = quote_identifier(dbc)
-    else:
+    if escape:
+        if dbc != "*":
+            # % is authorized on GRANT queries and should get escaped
+            # on the db name, but only if not requesting a table level grant
+            s_database = quote_identifier(dbc)
+        if table != "*":
+            table = quote_identifier(table)
+    if dbc == "*":
         # add revoke for *.*
         # before the modification query send to mysql will looks like
         # REVOKE SELECT ON `*`.* FROM %(user)s@%(host)s
         s_database = dbc
-    if table != "*":
-        table = quote_identifier(table)
     # identifiers cannot be used as values, same thing for grants
     qry = f"REVOKE {grant} ON {s_database}.{table} FROM %(user)s@%(host)s;"
     args = {}

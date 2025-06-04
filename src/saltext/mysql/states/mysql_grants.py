@@ -245,7 +245,7 @@ def absent(
             ret["comment"] = f"MySQL grant {name} is set to be revoked"
             return ret
         if __salt__["mysql.grant_revoke"](
-            grant, database, user, host, grant_option, **connection_args
+            grant, database, user, host, grant_option, escape, **connection_args
         ):
             ret["comment"] = "Grant {} on {} for {}@{} has been revoked".format(
                 grant, database, user, host
