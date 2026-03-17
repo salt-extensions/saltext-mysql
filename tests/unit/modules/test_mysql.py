@@ -773,8 +773,7 @@ def test_sanitize_comment():
     """
     Test comment sanitization
     """
-    input_data = dedent(
-        """
+    input_data = dedent("""
             /*
             multiline
             comment
@@ -784,21 +783,17 @@ def test_sanitize_comment():
             insert into test_update values ("some #hash value");            -- ending comment
             insert into test_update values ("crazy -- not comment"); -- another ending comment
             -- another comment type
-        """
-    ).strip()
-    expected_response = dedent(
-        """\
+        """).strip()
+    expected_response = dedent("""\
         CREATE TABLE test_update (a VARCHAR(25));
 
         insert into test_update values ("some #hash value");
         insert into test_update values ("crazy -- not comment");
-        """
-    )
+        """)
     output = mysql._sanitize_comments(input_data)
     assert output == expected_response
 
-    input_data = dedent(
-        """
+    input_data = dedent("""
             -- --------------------------------------------------------
             -- SQL Commands to set up the pmadb as described in the documentation.
             --
@@ -817,16 +812,13 @@ def test_sanitize_comment():
             CREATE DATABASE IF NOT EXISTS `phpmyadmin`
               DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
             USE phpmyadmin;
-        """
-    ).strip()
+        """).strip()
 
-    expected_response = dedent(
-        """
+    expected_response = dedent("""
         CREATE DATABASE IF NOT EXISTS `phpmyadmin`
           DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
         USE phpmyadmin;
-        """
-    ).strip()
+        """).strip()
 
     output = mysql._sanitize_comments(input_data)
     assert output == expected_response

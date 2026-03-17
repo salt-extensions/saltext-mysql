@@ -197,9 +197,7 @@ def _create_table():
             ADD COLUMN last_update TIMESTAMP NOT NULL
                                    DEFAULT CURRENT_TIMESTAMP
                                    ON UPDATE CURRENT_TIMESTAMP
-            """.format(
-                __context__["mysql_kwargs"]["db"], __context__["mysql_table_name"]
-            )
+            """.format(__context__["mysql_kwargs"]["db"], __context__["mysql_table_name"])
             cur, _ = run_query(__context__["mysql_client"], query)
             cur.close()
             return
@@ -212,9 +210,7 @@ def _create_table():
                   DEFAULT CURRENT_TIMESTAMP
                   ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY(bank, etcd_key)
-    );""".format(
-        __context__["mysql_table_name"]
-    )
+    );""".format(__context__["mysql_table_name"])
     log.info("mysql_cache: creating table %s", __context__["mysql_table_name"])
     cur, _ = run_query(__context__.get("mysql_client"), query)
     cur.close()

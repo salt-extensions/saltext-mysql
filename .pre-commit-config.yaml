@@ -2,7 +2,7 @@
 minimum_pre_commit_version: 2.4.0
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # v5.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
     hooks:
       - id: check-merge-conflict   # Check for files that contain merge conflict strings.
         args: [--assume-in-merge]
@@ -56,44 +56,44 @@ repos:
         args: [--silent, -E, fix_docstrings]
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: ce40a160603ab0e7d9c627ae33d7ef3906e2d2b2  # v3.19.1
+    rev: 75992aaa40730136014f34227e0135f63fc951b4  # v3.21.2
     hooks:
       - id: pyupgrade
-        name: Rewrite Code to be Py3.9+
+        name: Rewrite Code to be Py3.10+
         args: [
-          --py39-plus,
+          --py310-plus,
         ]
         exclude: src/saltext/mysql/version.py
 
   - repo: https://github.com/PyCQA/isort
-    rev: c8ab4a5b21bac924d106e3103dd7c979fdd0f9bc  # 6.0.1
+    rev: a333737ed43df02b18e6c95477ea1b285b3de15a  # 8.0.1
     hooks:
       - id: isort
         args: [
-          --py 39,
+          --py 310,
         ]
         exclude: src/saltext/mysql/(__init__|version).py
 
   - repo: https://github.com/psf/black
-    rev: 8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b  # 25.1.0
+    rev: c6755bb741b6481d6b3d3bb563c83fa060db96c9  # 26.3.1
     hooks:
       - id: black
         args: [-l 100]
         exclude: src/saltext/mysql/version.py
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: 78a9dcbecf4f755f65d1f3dec556bc249d723600  # 1.19.1
+    rev: dda8db18cfc68df532abf33b185ecd12d5b7b326  # 1.20.0
     hooks:
       - id: blacken-docs
         args: [--skip-errors]
         files: ^(docs/.*\.rst|src/saltext/mysql/.*\.py)$
         additional_dependencies:
-          - black==25.1.0
+          - black==26.3.1
   # <---- Formatting -----------------------------------------------------------------------------
 
   # ----- Security ------------------------------------------------------------------------------>
   - repo: https://github.com/PyCQA/bandit
-    rev: 8ff25e07e487f143571cc305e56dd0253c60bc7b  # 1.8.3
+    rev: 92ae8b82fb422a639f0ed8d99e96cea769594e08  # 1.9.4
     hooks:
       - id: bandit
         alias: bandit-salt
@@ -102,7 +102,7 @@ repos:
         exclude: src/saltext/mysql/version.py
 
   - repo: https://github.com/PyCQA/bandit
-    rev: 8ff25e07e487f143571cc305e56dd0253c60bc7b  # 1.8.3
+    rev: 92ae8b82fb422a639f0ed8d99e96cea769594e08  # 1.9.4
     hooks:
       - id: bandit
         alias: bandit-tests
@@ -123,8 +123,8 @@ repos:
         files: ^((setup|noxfile)|src/.*)\.py$
         require_serial: true
         additional_dependencies:
-          - nox==2025.2.9
-          - uv==0.6.15  # Makes this hook much faster
+          - nox==2026.2.9
+          - uv==0.10.11  # Makes this hook much faster
 
       - id: nox
         alias: lint-tests
@@ -134,13 +134,13 @@ repos:
         files: ^tests/.*\.py$
         require_serial: true
         additional_dependencies:
-          - nox==2025.2.9
-          - uv==0.6.15  # Makes this hook much faster
+          - nox==2026.2.9
+          - uv==0.10.11  # Makes this hook much faster
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: a185be0fd5b45112845b700d91b81050c75579e2  # v1.7.7.23
+    rev: 694e2c0dfb4253d51f3c6c54b8f9fec0a16764dc  # v1.7.11.24
     hooks:
       - id: actionlint
         additional_dependencies:
-          - shellcheck-py==0.10.0.1
+          - shellcheck-py==0.11.0.1
   # <---- Code Analysis --------------------------------------------------------------------------
