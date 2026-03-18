@@ -659,19 +659,54 @@ def test_grant_add():
     )
 
 
-@pytest.mark.skipif(True, reason="TODO: Mock up user_grants()")
 def test_grant_revoke():
     """
     Test grant revoke in mysql exec module
     """
-    _test_call(
-        mysql.grant_revoke,
-        "",
-        "SELECT,INSERT,UPDATE",
-        "database.*",
-        "frank",
-        "localhost",
-    )
+    mock_grants = [
+        "GRANT USAGE ON *.* TO 'testuser'@'%'",
+        "GRANT SELECT, INSERT, UPDATE ON database_1.testtableone TO 'testuser'@'%'",
+        "GRANT DELETE ON resitrict%ed.* TO 'testuser'@'%'",
+    ]
+
+    connect_mock = MagicMock()
+    with patch.object(mysql, "_connect", connect_mock):
+        with patch.object(mysql, "version", return_value="8.0.10"):
+            with patch.object(mysql, "user_grants", return_value=mock_grants):
+                with patch.dict(mysql.__salt__, {"config.option": MagicMock()}):
+                    mysql.grant_revoke(
+                        grant="SELECT, INSERT, UPDATE",
+                        database="database_1.testtableone",
+                        user="testuser",
+                        host="%",
+                    )
+
+                    mysql.grant_revoke(
+                        grant="DELETE", database="resitrict%ed.*", user="testuser", host="%"
+                    )
+
+                    calls = [
+                        call()
+                        .cursor()
+                        .execute(
+                            "REVOKE SELECT, INSERT, UPDATE ON `database_1`.`testtableone` FROM "
+                            "%(user)s@%(host)s;",
+                            {"host": "%", "user": "testuser"},
+                        ),
+                        call()
+                        .cursor()
+                        .execute(
+                            "REVOKE DELETE ON `resitrict%%ed`.* FROM %(user)s@%(host)s;",
+                            {"host": "%", "user": "testuser"},
+                        ),
+                    ]
+                    connect_mock.assert_has_calls(calls, any_order=True)
+
+            with patch.object(mysql, "grant_exists", return_value=False):
+                revoke = mysql.grant_revoke(
+                    grant="USAGE", database="*.*", user="testuser", host="%"
+                )
+                assert revoke
 
 
 def test_processlist():
