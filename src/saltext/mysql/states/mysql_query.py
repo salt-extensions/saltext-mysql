@@ -32,7 +32,12 @@ def __virtual__():
     """
     if "mysql.query" in __salt__:
         return True
-    return (False, "mysql module could not be loaded")
+    return (
+        False,
+        "The mysql execution module could not be loaded: no Python MySQL client "
+        "could be imported. Install either mysqlclient (MySQLdb) or PyMySQL, "
+        "for onedir Salt installations via `salt-pip install pymysql`.",
+    )
 
 
 def _get_mysql_error():
