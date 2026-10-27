@@ -177,7 +177,14 @@ def __virtual__():
     """
     Confirm that a python mysql client is installed.
     """
-    return bool(MySQLdb), "No python mysql client installed." if MySQLdb is None else ""
+    if MySQLdb is None:
+        return (
+            False,
+            "No Python MySQL client could be imported: this module requires either "
+            "mysqlclient (MySQLdb) or PyMySQL. For onedir Salt installations, "
+            "install one via `salt-pip install pymysql`.",
+        )
+    return True
 
 
 def _get_options(ret=None):
