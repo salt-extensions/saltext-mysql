@@ -159,6 +159,37 @@ def set_container_name_before_start(container):
     return container
 
 
+@pytest.fixture
+def mysql_db(mysql, request):
+    """
+    Create a database with a random name and ensure it is removed
+    after the test, even if the test fails.
+    """
+    prefix = getattr(request, "param", "saltdb-")
+    db_name = random_string(prefix, uppercase=False)
+    assert mysql.db_create(db_name)
+    try:
+        yield db_name
+    finally:
+        assert mysql.db_remove(db_name)
+
+
+@pytest.fixture
+def mysql_account(mysql, request):
+    """
+    Create a user with a random name at ``localhost`` (password
+    ``badpassword``) and ensure it is removed after the test,
+    even if the test fails.
+    """
+    prefix = getattr(request, "param", "saltuser-")
+    user_name = random_string(prefix, uppercase=False)
+    assert mysql.user_create(user_name, host="localhost", password="badpassword")
+    try:
+        yield user_name
+    finally:
+        assert mysql.user_remove(user_name, host="localhost")
+
+
 @pytest.fixture(scope="module")
 def mysql_container(salt_factories, mysql_combo):
 
