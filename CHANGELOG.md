@@ -4,6 +4,16 @@ This project uses [Semantic Versioning](https://semver.org/) - MAJOR.MINOR.PATCH
 
 # Changelog
 
+## 1.1.1 (2026-10-27)
+
+
+### Fixed
+
+- Fixed `mysql.grant_revoke` ignoring the `escape` parameter, which made it impossible to revoke grants on databases containing wildcard characters (`_`, `%`) when they were added with `escape: False` [#18](https://github.com/salt-extensions/saltext-mysql/issues/18)
+- Fixed `mysql_grants.absent` not passing the `escape` parameter to `mysql.grant_revoke` [#21](https://github.com/salt-extensions/saltext-mysql/issues/21)
+- Improved `__virtual__` error messages to explicitly name the missing Python MySQL client libraries (mysqlclient/PyMySQL) and how to install them [#25](https://github.com/salt-extensions/saltext-mysql/issues/25)
+- Fixed `mysql.query` failing with `TypeError: str() argument 'encoding' must be str, not dict` when using PyMySQL [#26](https://github.com/salt-extensions/saltext-mysql/issues/26)
+
 ## 1.1.0 (2025-02-07)
 
 
