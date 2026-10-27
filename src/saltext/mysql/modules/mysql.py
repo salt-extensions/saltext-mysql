@@ -2347,6 +2347,20 @@ def __ssl_option_sanitize(ssl_option):
     return " REQUIRE " + " AND ".join(new_ssl_option)
 
 
+def __grant_db_tbl(database, escape=True):
+    db, _, tbl = database.rpartition(".")
+
+    if escape:
+        if db != "*":
+            # _ and % are authorized on GRANT queries and should get escaped
+            # on the db name, but only if not requesting a table level grant
+            db = quote_identifier(db, for_grants=tbl == "*")
+        if tbl != "*":
+            tbl = quote_identifier(tbl)
+
+    return db, tbl
+
+
 def __grant_generate(
     grant,
     database,
@@ -2367,20 +2381,10 @@ def __grant_generate(
     grant = re.sub(r"\s*,\s*", ", ", grant).upper()
 
     grant = __grant_normalize(grant)
+    db, tbl = __grant_db_tbl(database, escape=escape)
 
-    db_part = database.rpartition(".")
-    dbc = db_part[0]
-    table = db_part[2]
-
-    if escape:
-        if dbc != "*":
-            # _ and % are authorized on GRANT queries and should get escaped
-            # on the db name, but only if not requesting a table level grant
-            dbc = quote_identifier(dbc, for_grants=table == "*")
-        if table != "*":
-            table = quote_identifier(table)
     # identifiers cannot be used as values, and same thing for grants
-    qry = f"GRANT {grant} ON {dbc}.{table} TO %(user)s@%(host)s"
+    qry = f"GRANT {grant} ON {db}.{tbl} TO %(user)s@%(host)s"
     args = {}
     args["user"] = user
     args["host"] = host
@@ -2602,26 +2606,12 @@ def grant_revoke(
     cur = dbc.cursor()
 
     grant = __grant_normalize(grant)
-
     if salt.utils.data.is_true(grant_option):
         grant += ", GRANT OPTION"
+    db, tbl = __grant_db_tbl(database, escape=escape)
 
-    db_part = database.rpartition(".")
-    dbc = db_part[0]
-    table = db_part[2]
-    if dbc != "*":
-        # _ and % are authorized on GRANT queries and should get escaped
-        # on the db name, but only if not requesting a table level grant
-        s_database = quote_identifier(dbc, for_grants=table == "*")
-    else:
-        # add revoke for *.*
-        # before the modification query send to mysql will looks like
-        # REVOKE SELECT ON `*`.* FROM %(user)s@%(host)s
-        s_database = dbc
-    if table != "*":
-        table = quote_identifier(table)
     # identifiers cannot be used as values, same thing for grants
-    qry = f"REVOKE {grant} ON {s_database}.{table} FROM %(user)s@%(host)s;"
+    qry = f"REVOKE {grant} ON {db}.{tbl} FROM %(user)s@%(host)s;"
     args = {}
     args["user"] = user
     args["host"] = host
