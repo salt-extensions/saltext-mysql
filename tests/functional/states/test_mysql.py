@@ -213,6 +213,64 @@ def test_grants_present_absent(mysql, mysql_grants):
         assert ret
 
 
+def test_grants_present_absent_underscore_no_escape(mysql, mysql_grants):
+    """
+    The absent state must pass escape through to mysql.grant_revoke,
+    otherwise grants added with escape=False on databases containing
+    wildcard characters cannot be revoked (issues #18, #21).
+    """
+    # Create the database
+    ret = mysql.db_create("underscore_db")
+    assert ret
+
+    # Create a user
+    ret = mysql.user_create(
+        "george",
+        host="localhost",
+        password="badpassword",
+    )
+    assert ret
+
+    try:
+
+        ret = mysql_grants.present(
+            name="add_underscore_db_grants",
+            grant="select",
+            database="underscore_db.*",
+            user="george",
+            host="localhost",
+            escape=False,
+        )
+        assert ret.changes
+        assert ret.changes == {"add_underscore_db_grants": "Present"}
+        assert ret.comment
+        assert ret.comment == "Grant select on underscore_db.* to george@localhost has been added"
+
+        ret = mysql_grants.absent(
+            name="delete_underscore_db_grants",
+            grant="select",
+            database="underscore_db.*",
+            user="george",
+            host="localhost",
+            escape=False,
+        )
+        assert ret.changes
+        assert ret.changes == {"delete_underscore_db_grants": "Absent"}
+        assert ret.comment
+        assert (
+            ret.comment == "Grant select on underscore_db.* for george@localhost has been revoked"
+        )
+
+    finally:
+        # Remove the user
+        ret = mysql.user_remove("george", host="localhost")
+        assert ret
+
+        # Remove the database
+        ret = mysql.db_remove("underscore_db")
+        assert ret
+
+
 def test_grants_present_absent_all_privileges(mysql, mysql_grants):
 
     # Create the database

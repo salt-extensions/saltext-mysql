@@ -659,19 +659,94 @@ def test_grant_add():
     )
 
 
-@pytest.mark.skipif(True, reason="TODO: Mock up user_grants()")
 def test_grant_revoke():
     """
     Test grant revoke in mysql exec module
     """
-    _test_call(
-        mysql.grant_revoke,
-        "",
-        "SELECT,INSERT,UPDATE",
-        "database.*",
-        "frank",
-        "localhost",
-    )
+    connect_mock = MagicMock()
+    with patch.object(mysql, "_connect", connect_mock):
+        with patch.object(mysql, "version", return_value="8.0.10"):
+            with patch.object(mysql, "grant_exists", return_value=False):
+                # Table-level grant: the database name must not get
+                # wildcard-escaped
+                ret = mysql.grant_revoke(
+                    grant="SELECT, INSERT, UPDATE",
+                    database="database_1.testtableone",
+                    user="testuser",
+                    host="%",
+                )
+                assert ret
+
+                # Database-level grant: _ and % are wildcards in the stored
+                # grant and must get escaped to only match the literal name
+                ret = mysql.grant_revoke(
+                    grant="SELECT",
+                    database="underscore_db.*",
+                    user="testuser",
+                    host="%",
+                )
+                assert ret
+                ret = mysql.grant_revoke(
+                    grant="DELETE",
+                    database="restrict%ed.*",
+                    user="testuser",
+                    host="%",
+                )
+                assert ret
+
+                # escape=False must pass the database name through unchanged
+                ret = mysql.grant_revoke(
+                    grant="SELECT",
+                    database="underscore_db.*",
+                    user="testuser",
+                    host="%",
+                    escape=False,
+                )
+                assert ret
+
+                # Global grant
+                ret = mysql.grant_revoke(
+                    grant="USAGE",
+                    database="*.*",
+                    user="testuser",
+                    host="%",
+                )
+                assert ret
+
+                calls = [
+                    call()
+                    .cursor()
+                    .execute(
+                        "REVOKE SELECT, INSERT, UPDATE ON `database_1`.`testtableone` "
+                        "FROM %(user)s@%(host)s;",
+                        {"host": "%", "user": "testuser"},
+                    ),
+                    call()
+                    .cursor()
+                    .execute(
+                        r"REVOKE SELECT ON `underscore\_db`.* FROM %(user)s@%(host)s;",
+                        {"host": "%", "user": "testuser"},
+                    ),
+                    call()
+                    .cursor()
+                    .execute(
+                        "REVOKE DELETE ON `restrict%%ed`.* FROM %(user)s@%(host)s;",
+                        {"host": "%", "user": "testuser"},
+                    ),
+                    call()
+                    .cursor()
+                    .execute(
+                        "REVOKE SELECT ON underscore_db.* FROM %(user)s@%(host)s;",
+                        {"host": "%", "user": "testuser"},
+                    ),
+                    call()
+                    .cursor()
+                    .execute(
+                        "REVOKE USAGE ON *.* FROM %(user)s@%(host)s;",
+                        {"host": "%", "user": "testuser"},
+                    ),
+                ]
+                connect_mock.assert_has_calls(calls, any_order=True)
 
 
 def test_processlist():
