@@ -8,6 +8,7 @@ import time
 import pytest
 from pytestshellutils.utils import format_callback_to_string
 from salt.utils.versions import version_cmp
+from saltfactories.utils import random_string
 
 from saltext.mysql.modules import mysql as mysqlmod
 from tests.support.mysql import *  # pylint: disable=wildcard-import,unused-wildcard-import
@@ -93,18 +94,20 @@ def test_db_list(mysql):
 
 
 def test_db_create_alter_remove(mysql):
-    ret = mysql.db_create("salt")
+    db_name = random_string("salt_db_", uppercase=False)
+    ret = mysql.db_create(db_name)
     assert ret
 
-    ret = mysql.alter_db(
-        name="salt",
-        character_set="latin1",
-        collate="latin1_general_ci",
-    )
-    assert ret
-
-    ret = mysql.db_remove(name="salt")
-    assert ret
+    try:
+        ret = mysql.alter_db(
+            name=db_name,
+            character_set="latin1",
+            collate="latin1_general_ci",
+        )
+        assert ret
+    finally:
+        ret = mysql.db_remove(name=db_name)
+        assert ret
 
 
 def test_user_list(mysql, mysql_combo):
@@ -179,22 +182,24 @@ def test_user_info(mysql, mysql_combo):
 
 
 def test_user_create_chpass_delete(mysql):
+    user_name = random_string("salt_user_", uppercase=False)
     ret = mysql.user_create(
-        "george",
+        user_name,
         host="localhost",
         password="badpassword",
     )
     assert ret
 
-    ret = mysql.user_chpass(
-        "george",
-        host="localhost",
-        password="different_password",
-    )
-    assert ret
-
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
+    try:
+        ret = mysql.user_chpass(
+            user_name,
+            host="localhost",
+            password="different_password",
+        )
+        assert ret
+    finally:
+        ret = mysql.user_remove(user_name, host="localhost")
+        assert ret
 
 
 def test_user_grants(mysql, mysql_combo):
@@ -202,24 +207,12 @@ def test_user_grants(mysql, mysql_combo):
     assert ret
 
 
-def test_grant_add_revoke(mysql):
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
-    # Create a user
-    ret = mysql.user_create(
-        "george",
-        host="localhost",
-        password="badpassword",
-    )
-    assert ret
-
+def test_grant_add_revoke(mysql, mysql_db, mysql_account):
     # Grant privileges to user to specific table
     ret = mysql.grant_add(
         grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -227,8 +220,8 @@ def test_grant_add_revoke(mysql):
     # Check the grant exists
     ret = mysql.grant_exists(
         grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -236,8 +229,8 @@ def test_grant_add_revoke(mysql):
     # Revoke the grant
     ret = mysql.grant_revoke(
         grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -245,8 +238,8 @@ def test_grant_add_revoke(mysql):
     # Check the grant does not exist
     ret = mysql.grant_exists(
         grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
@@ -255,7 +248,7 @@ def test_grant_add_revoke(mysql):
     ret = mysql.grant_add(
         grant="ALL PRIVILEGES",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -264,7 +257,7 @@ def test_grant_add_revoke(mysql):
     ret = mysql.grant_exists(
         grant="ALL PRIVILEGES",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -273,7 +266,7 @@ def test_grant_add_revoke(mysql):
     ret = mysql.grant_revoke(
         grant="ALL PRIVILEGES",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -281,43 +274,27 @@ def test_grant_add_revoke(mysql):
     # Check the grant does not exist
     ret = mysql.grant_exists(
         grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
 
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
-
-
-def test_grant_add_revoke_underscore(mysql):
+@pytest.mark.parametrize("mysql_db", ("saltdb_",), indirect=True)
+def test_grant_add_revoke_underscore(mysql, mysql_db, mysql_account):
     """
     Grants on databases with wildcard characters in their name must be
     revocable both with the default escaping and with escape=False (issue #18).
     """
-    # Create the database
-    ret = mysql.db_create("underscore_db")
-    assert ret
-
-    # Create a user
-    ret = mysql.user_create(
-        "george",
-        host="localhost",
-        password="badpassword",
-    )
-    assert ret
+    # This test relies on the database name containing a wildcard character
+    assert "_" in mysql_db
 
     # Grant privileges with the default escaping (grants on the literal name)
     ret = mysql.grant_add(
         grant="SELECT",
-        database="underscore_db.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -325,8 +302,8 @@ def test_grant_add_revoke_underscore(mysql):
     # Check the grant exists
     ret = mysql.grant_exists(
         grant="SELECT",
-        database="underscore_db.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -334,8 +311,8 @@ def test_grant_add_revoke_underscore(mysql):
     # Revoke the grant
     ret = mysql.grant_revoke(
         grant="SELECT",
-        database="underscore_db.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -343,8 +320,8 @@ def test_grant_add_revoke_underscore(mysql):
     # Check the grant does not exist
     ret = mysql.grant_exists(
         grant="SELECT",
-        database="underscore_db.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
@@ -352,8 +329,8 @@ def test_grant_add_revoke_underscore(mysql):
     # Grant privileges without escaping the database name wildcards
     ret = mysql.grant_add(
         grant="SELECT",
-        database="underscore_db.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
         escape=False,
     )
@@ -362,8 +339,8 @@ def test_grant_add_revoke_underscore(mysql):
     # Check the grant exists
     ret = mysql.grant_exists(
         grant="SELECT",
-        database="underscore_db.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
         escape=False,
     )
@@ -373,8 +350,8 @@ def test_grant_add_revoke_underscore(mysql):
     # database name does not match the stored grant
     ret = mysql.grant_revoke(
         grant="SELECT",
-        database="underscore_db.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
         escape=False,
     )
@@ -383,23 +360,15 @@ def test_grant_add_revoke_underscore(mysql):
     # Check the grant does not exist
     ret = mysql.grant_exists(
         grant="SELECT",
-        database="underscore_db.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
         escape=False,
     )
     assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
 
-    # Remove the database
-    ret = mysql.db_remove("underscore_db")
-    assert ret
-
-
-def test_grant_replication_replica_add_revoke(mysql, mysql_container):
+def test_grant_replication_replica_add_revoke(mysql, mysql_container, mysql_account):
     # The REPLICATION REPLICA grant is only available for mariadb
     if "mariadb" not in mysql_container.mysql_name:
         pytest.skip(
@@ -414,23 +383,11 @@ def test_grant_replication_replica_add_revoke(mysql, mysql_container):
             f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
-    # Create a user
-    ret = mysql.user_create(
-        "george",
-        host="localhost",
-        password="badpassword",
-    )
-    assert ret
-
     # Grant privileges to user to specific table
     ret = mysql.grant_add(
         grant="REPLICATION REPLICA",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -439,7 +396,7 @@ def test_grant_replication_replica_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="REPLICATION REPLICA",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -448,7 +405,7 @@ def test_grant_replication_replica_add_revoke(mysql, mysql_container):
     ret = mysql.grant_revoke(
         grant="REPLICATION REPLICA",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -457,38 +414,18 @@ def test_grant_replication_replica_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="REPLICATION REPLICA",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
 
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
-
-
-def test_grant_replication_slave_add_revoke(mysql, mysql_container):
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
-    # Create a user
-    ret = mysql.user_create(
-        "george",
-        host="localhost",
-        password="badpassword",
-    )
-    assert ret
-
+def test_grant_replication_slave_add_revoke(mysql, mysql_container, mysql_account):
     # Grant privileges to user to specific table
     ret = mysql.grant_add(
         grant="REPLICATION SLAVE",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -497,7 +434,7 @@ def test_grant_replication_slave_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="REPLICATION SLAVE",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -506,7 +443,7 @@ def test_grant_replication_slave_add_revoke(mysql, mysql_container):
     ret = mysql.grant_revoke(
         grant="REPLICATION SLAVE",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -515,38 +452,18 @@ def test_grant_replication_slave_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="REPLICATION SLAVE",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
 
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
-
-
-def test_grant_replication_client_add_revoke(mysql, mysql_container):
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
-    # Create a user
-    ret = mysql.user_create(
-        "george",
-        host="localhost",
-        password="badpassword",
-    )
-    assert ret
-
+def test_grant_replication_client_add_revoke(mysql, mysql_container, mysql_account):
     # Grant privileges to user to specific table
     ret = mysql.grant_add(
         grant="REPLICATION CLIENT",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -555,7 +472,7 @@ def test_grant_replication_client_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="REPLICATION CLIENT",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -564,7 +481,7 @@ def test_grant_replication_client_add_revoke(mysql, mysql_container):
     ret = mysql.grant_revoke(
         grant="REPLICATION CLIENT",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -573,21 +490,13 @@ def test_grant_replication_client_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="REPLICATION CLIENT",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
 
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
-
-
-def test_grant_binlog_monitor_add_revoke(mysql, mysql_container):
+def test_grant_binlog_monitor_add_revoke(mysql, mysql_container, mysql_db, mysql_account):
     # The BINLOG MONITOR grant is only available for mariadb
     if "mariadb" not in mysql_container.mysql_name:
         pytest.skip(
@@ -602,23 +511,11 @@ def test_grant_binlog_monitor_add_revoke(mysql, mysql_container):
             f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
-    # Create a user
-    ret = mysql.user_create(
-        "george",
-        host="localhost",
-        password="badpassword",
-    )
-    assert ret
-
     # Grant privileges to user to specific table
     ret = mysql.grant_add(
         grant="BINLOG MONITOR",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -626,8 +523,8 @@ def test_grant_binlog_monitor_add_revoke(mysql, mysql_container):
     # Check the grant exists
     ret = mysql.grant_exists(
         grant="BINLOG MONITOR",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -636,7 +533,7 @@ def test_grant_binlog_monitor_add_revoke(mysql, mysql_container):
     ret = mysql.grant_revoke(
         grant="BINLOG MONITOR",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -644,22 +541,14 @@ def test_grant_binlog_monitor_add_revoke(mysql, mysql_container):
     # Check the grant does not exist
     ret = mysql.grant_exists(
         grant="BINLOG MONITOR",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
 
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
-
-
-def test_grant_replica_monitor_add_revoke(mysql, mysql_container):
+def test_grant_replica_monitor_add_revoke(mysql, mysql_container, mysql_account):
     # The REPLICA MONITOR grant is only available for mariadb
     if "mariadb" not in mysql_container.mysql_name:
         pytest.skip(
@@ -674,23 +563,11 @@ def test_grant_replica_monitor_add_revoke(mysql, mysql_container):
             f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
-    # Create a user
-    ret = mysql.user_create(
-        "george",
-        host="localhost",
-        password="badpassword",
-    )
-    assert ret
-
     # Grant privileges to user to specific table
     ret = mysql.grant_add(
         grant="REPLICA MONITOR",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -699,7 +576,7 @@ def test_grant_replica_monitor_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="REPLICA MONITOR",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -708,7 +585,7 @@ def test_grant_replica_monitor_add_revoke(mysql, mysql_container):
     ret = mysql.grant_revoke(
         grant="REPLICA MONITOR",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -717,21 +594,13 @@ def test_grant_replica_monitor_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="REPLICA MONITOR",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
 
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
-
-
-def test_grant_slave_monitor_add_revoke(mysql, mysql_container):
+def test_grant_slave_monitor_add_revoke(mysql, mysql_container, mysql_db, mysql_account):
     # The SLAVE MONITOR grant is only available for mariadb
     if "mariadb" not in mysql_container.mysql_name:
         pytest.skip(
@@ -746,23 +615,11 @@ def test_grant_slave_monitor_add_revoke(mysql, mysql_container):
             f"for the {mysql_container.mysql_name}:{mysql_container.mysql_version} docker image."
         )
 
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
-    # Create a user
-    ret = mysql.user_create(
-        "george",
-        host="localhost",
-        password="badpassword",
-    )
-    assert ret
-
     # Grant privileges to user to specific table
     ret = mysql.grant_add(
         grant="SLAVE MONITOR",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -771,7 +628,7 @@ def test_grant_slave_monitor_add_revoke(mysql, mysql_container):
     ret = mysql.grant_exists(
         grant="SLAVE MONITOR",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -780,7 +637,7 @@ def test_grant_slave_monitor_add_revoke(mysql, mysql_container):
     ret = mysql.grant_revoke(
         grant="SLAVE MONITOR",
         database="*.*",
-        user="george",
+        user=mysql_account,
         host="localhost",
     )
     assert ret
@@ -788,19 +645,11 @@ def test_grant_slave_monitor_add_revoke(mysql, mysql_container):
     # Check the grant does not exist
     ret = mysql.grant_exists(
         grant="SLAVE MONITOR",
-        database="salt.*",
-        user="george",
+        database=f"{mysql_db}.*",
+        user=mysql_account,
         host="localhost",
     )
     assert not ret
-
-    # Remove the user
-    ret = mysql.user_remove("george", host="localhost")
-    assert ret
-
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
 
 
 def test_plugin_add_status_remove(mysql, mysql_combo):
@@ -848,155 +697,145 @@ def test_plugin_list(mysql, mysql_container):
     assert ret
 
 
-def test_grant_add_revoke_password_hash(mysql):
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
+def test_grant_add_revoke_password_hash(mysql, mysql_db):
     # Create a user
+    user_name = random_string("salt_user_", uppercase=False)
     ret = mysql.user_create(
-        "george",
+        user_name,
         host="%",
         password_hash="*2470C0C06DEE42FD1618BB99005ADCA2EC9D1E19",
     )
     assert ret
 
-    # Grant privileges to user to specific table
-    ret = mysql.grant_add(
-        grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
-        host="%",
-    )
-    assert ret
+    try:
+        # Grant privileges to user to specific table
+        ret = mysql.grant_add(
+            grant="ALL PRIVILEGES",
+            database=f"{mysql_db}.*",
+            user=user_name,
+            host="%",
+        )
+        assert ret
 
-    # Check the grant exists
-    ret = mysql.grant_exists(
-        grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
-        host="%",
-    )
-    assert ret
+        # Check the grant exists
+        ret = mysql.grant_exists(
+            grant="ALL PRIVILEGES",
+            database=f"{mysql_db}.*",
+            user=user_name,
+            host="%",
+        )
+        assert ret
 
-    # Check the grant exists via a query
-    ret = mysql.query(
-        database="salt",
-        query="SELECT 1",
-        connection_user="george",
-        connection_pass="password",
-        connection_db="salt",
-    )
-    assert ret
+        # Check the grant exists via a query
+        ret = mysql.query(
+            database=mysql_db,
+            query="SELECT 1",
+            connection_user=user_name,
+            connection_pass="password",
+            connection_db=mysql_db,
+        )
+        assert ret
 
-    # Revoke the grant
-    ret = mysql.grant_revoke(
-        grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
-        host="%",
-    )
-    assert ret
+        # Revoke the grant
+        ret = mysql.grant_revoke(
+            grant="ALL PRIVILEGES",
+            database=f"{mysql_db}.*",
+            user=user_name,
+            host="%",
+        )
+        assert ret
 
-    # Check the grant does not exist
-    ret = mysql.grant_exists(
-        grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
-        host="%",
-    )
-    assert not ret
+        # Check the grant does not exist
+        ret = mysql.grant_exists(
+            grant="ALL PRIVILEGES",
+            database=f"{mysql_db}.*",
+            user=user_name,
+            host="%",
+        )
+        assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="%")
-    assert ret
-
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
+    finally:
+        # Remove the user
+        ret = mysql.user_remove(user_name, host="%")
+        assert ret
 
 
-def test_create_alter_password_hash(mysql):
-    # Create the database
-    ret = mysql.db_create("salt")
-    assert ret
-
+def test_create_alter_password_hash(mysql, mysql_db):
     # Create a user
+    user_name = random_string("salt_user_", uppercase=False)
     ret = mysql.user_create(
-        "george",
+        user_name,
         host="%",
         password_hash="*2470C0C06DEE42FD1618BB99005ADCA2EC9D1E19",
     )
     assert ret
 
-    # Grant privileges to user to specific table
-    ret = mysql.grant_add(
-        grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
-        host="%",
-    )
-    assert ret
+    try:
+        # Grant privileges to user to specific table
+        ret = mysql.grant_add(
+            grant="ALL PRIVILEGES",
+            database=f"{mysql_db}.*",
+            user=user_name,
+            host="%",
+        )
+        assert ret
 
-    # Check the grant exists
-    ret = mysql.grant_exists(
-        grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
-        host="%",
-    )
-    assert ret
+        # Check the grant exists
+        ret = mysql.grant_exists(
+            grant="ALL PRIVILEGES",
+            database=f"{mysql_db}.*",
+            user=user_name,
+            host="%",
+        )
+        assert ret
 
-    # Check we can query as the new user
-    ret = mysql.query(
-        database="salt",
-        query="SELECT 1",
-        connection_user="george",
-        connection_pass="password",
-        connection_db="salt",
-    )
-    assert ret
+        # Check we can query as the new user
+        ret = mysql.query(
+            database=mysql_db,
+            query="SELECT 1",
+            connection_user=user_name,
+            connection_pass="password",
+            connection_db=mysql_db,
+        )
+        assert ret
 
-    # Change the user password
-    ret = mysql.user_chpass(
-        "george",
-        host="%",
-        password_hash="*F4A5147613F01DEC0C5226BF24CD1D5762E6AAF2",
-    )
-    assert ret
+        # Change the user password
+        ret = mysql.user_chpass(
+            user_name,
+            host="%",
+            password_hash="*F4A5147613F01DEC0C5226BF24CD1D5762E6AAF2",
+        )
+        assert ret
 
-    # Check we can query with the new password
-    ret = mysql.query(
-        database="salt",
-        query="SELECT 1",
-        connection_user="george",
-        connection_pass="badpassword",
-        connection_db="salt",
-    )
-    assert ret
+        # Check we can query with the new password
+        ret = mysql.query(
+            database=mysql_db,
+            query="SELECT 1",
+            connection_user=user_name,
+            connection_pass="badpassword",
+            connection_db=mysql_db,
+        )
+        assert ret
 
-    # Revoke the grant
-    ret = mysql.grant_revoke(
-        grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
-        host="%",
-    )
-    assert ret
+        # Revoke the grant
+        ret = mysql.grant_revoke(
+            grant="ALL PRIVILEGES",
+            database=f"{mysql_db}.*",
+            user=user_name,
+            host="%",
+        )
+        assert ret
 
-    # Check the grant does not exist
-    ret = mysql.grant_exists(
-        grant="ALL PRIVILEGES",
-        database="salt.*",
-        user="george",
-        host="%",
-    )
-    assert not ret
+        # Check the grant does not exist
+        ret = mysql.grant_exists(
+            grant="ALL PRIVILEGES",
+            database=f"{mysql_db}.*",
+            user=user_name,
+            host="%",
+        )
+        assert not ret
 
-    # Remove the user
-    ret = mysql.user_remove("george", host="%")
-    assert ret
-
-    # Remove the database
-    ret = mysql.db_remove("salt")
-    assert ret
+    finally:
+        # Remove the user
+        ret = mysql.user_remove(user_name, host="%")
+        assert ret
