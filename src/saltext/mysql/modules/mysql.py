@@ -2443,6 +2443,20 @@ def grant_exists(
     """
     Checks to see if a grant exists in the database
 
+    escape
+        Escape the MySQL wildcard characters ``_`` and ``%`` in the database
+        name of database-level grants (``db.*``). Defaults to ``True``.
+        Make sure to use the same value the grant was added with.
+
+        MySQL usually interprets these characters as wildcards, meaning
+        unescaped grants apply to all databases matching the pattern, while
+        escaped ones only apply to the literal database name.
+
+        .. note::
+            On MySQL servers with ``partial_revokes`` enabled, database names
+            in grants are always interpreted literally and escaped grants
+            fail to match the intended database. Set this to ``False`` there.
+
     CLI Example:
 
     .. code-block:: bash
@@ -2553,6 +2567,19 @@ def grant_add(
 
     For database, make sure you specify database.table or database.*
 
+    escape
+        Escape the MySQL wildcard characters ``_`` and ``%`` in the database
+        name of database-level grants (``db.*``). Defaults to ``True``.
+
+        MySQL usually interprets these characters as wildcards, meaning
+        unescaped grants apply to all databases matching the pattern, while
+        escaped ones only apply to the literal database name.
+
+        .. note::
+            On MySQL servers with ``partial_revokes`` enabled, database names
+            in grants are always interpreted literally and escaped grants
+            fail to match the intended database. Set this to ``False`` there.
+
     CLI Example:
 
     .. code-block:: bash
@@ -2592,6 +2619,21 @@ def grant_revoke(
 ):
     """
     Removes a grant from the MySQL server.
+
+    escape
+        Escape the MySQL wildcard characters ``_`` and ``%`` in the database
+        name of database-level grants (``db.*``). Defaults to ``True``.
+        Make sure to use the same value the grant was added with, otherwise
+        the stored grant will not match and the revocation fails.
+
+        MySQL usually interprets these characters as wildcards, meaning
+        unescaped grants apply to all databases matching the pattern, while
+        escaped ones only apply to the literal database name.
+
+        .. note::
+            On MySQL servers with ``partial_revokes`` enabled, database names
+            in grants are always interpreted literally and escaped grants
+            fail to match the intended database. Set this to ``False`` there.
 
     CLI Example:
 
