@@ -296,6 +296,109 @@ def test_grant_add_revoke(mysql):
     assert ret
 
 
+def test_grant_add_revoke_underscore(mysql):
+    """
+    Grants on databases with wildcard characters in their name must be
+    revocable both with the default escaping and with escape=False (issue #18).
+    """
+    # Create the database
+    ret = mysql.db_create("underscore_db")
+    assert ret
+
+    # Create a user
+    ret = mysql.user_create(
+        "george",
+        host="localhost",
+        password="badpassword",
+    )
+    assert ret
+
+    # Grant privileges with the default escaping (grants on the literal name)
+    ret = mysql.grant_add(
+        grant="SELECT",
+        database="underscore_db.*",
+        user="george",
+        host="localhost",
+    )
+    assert ret
+
+    # Check the grant exists
+    ret = mysql.grant_exists(
+        grant="SELECT",
+        database="underscore_db.*",
+        user="george",
+        host="localhost",
+    )
+    assert ret
+
+    # Revoke the grant
+    ret = mysql.grant_revoke(
+        grant="SELECT",
+        database="underscore_db.*",
+        user="george",
+        host="localhost",
+    )
+    assert ret
+
+    # Check the grant does not exist
+    ret = mysql.grant_exists(
+        grant="SELECT",
+        database="underscore_db.*",
+        user="george",
+        host="localhost",
+    )
+    assert not ret
+
+    # Grant privileges without escaping the database name wildcards
+    ret = mysql.grant_add(
+        grant="SELECT",
+        database="underscore_db.*",
+        user="george",
+        host="localhost",
+        escape=False,
+    )
+    assert ret
+
+    # Check the grant exists
+    ret = mysql.grant_exists(
+        grant="SELECT",
+        database="underscore_db.*",
+        user="george",
+        host="localhost",
+        escape=False,
+    )
+    assert ret
+
+    # Revoking must honor escape=False as well, otherwise the escaped
+    # database name does not match the stored grant
+    ret = mysql.grant_revoke(
+        grant="SELECT",
+        database="underscore_db.*",
+        user="george",
+        host="localhost",
+        escape=False,
+    )
+    assert ret
+
+    # Check the grant does not exist
+    ret = mysql.grant_exists(
+        grant="SELECT",
+        database="underscore_db.*",
+        user="george",
+        host="localhost",
+        escape=False,
+    )
+    assert not ret
+
+    # Remove the user
+    ret = mysql.user_remove("george", host="localhost")
+    assert ret
+
+    # Remove the database
+    ret = mysql.db_remove("underscore_db")
+    assert ret
+
+
 def test_grant_replication_replica_add_revoke(mysql, mysql_container):
     # The REPLICATION REPLICA grant is only available for mariadb
     if "mariadb" not in mysql_container.mysql_name:

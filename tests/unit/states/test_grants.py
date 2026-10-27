@@ -90,3 +90,32 @@ def test_absent():
             comt = "Grant None on None to None@localhost is not present, so it cannot be revoked"
             ret.update({"comment": comt, "result": True})
             assert mysql_grants.absent(name) == ret
+
+
+def test_absent_passes_escape():
+    """
+    The escape parameter must be forwarded to both mysql.grant_exists and
+    mysql.grant_revoke (issue #21).
+    """
+    mock_exists = MagicMock(return_value=True)
+    mock_revoke = MagicMock(return_value=True)
+    with patch.dict(
+        mysql_grants.__salt__,
+        {"mysql.grant_exists": mock_exists, "mysql.grant_revoke": mock_revoke},
+    ):
+        with patch.dict(mysql_grants.__opts__, {"test": False}):
+            ret = mysql_grants.absent(
+                "revoke_underscore_db",
+                grant="SELECT",
+                database="underscore_db.*",
+                user="frank",
+                host="localhost",
+                escape=False,
+            )
+    assert ret["result"]
+    mock_exists.assert_called_once_with(
+        "SELECT", "underscore_db.*", "frank", "localhost", False, False
+    )
+    mock_revoke.assert_called_once_with(
+        "SELECT", "underscore_db.*", "frank", "localhost", False, False
+    )
