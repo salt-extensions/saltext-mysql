@@ -104,7 +104,17 @@ def present(
         Adds the WITH GRANT OPTION to the defined grant. Default is ``False``
 
     escape
-        Defines if the database value gets escaped or not. Default is ``True``
+        Escape the MySQL wildcard characters ``_`` and ``%`` in the database
+        name of database-level grants (``db.*``). Default is ``True``
+
+        MySQL usually interprets these characters as wildcards, meaning
+        unescaped grants apply to all databases matching the pattern, while
+        escaped ones only apply to the literal database name.
+
+        .. note::
+            On MySQL servers with ``partial_revokes`` enabled, database names
+            in grants are always interpreted literally and escaped grants
+            fail to match the intended database. Set this to ``False`` there.
 
     revoke_first
         By default, MySQL will not do anything if you issue a command to grant
@@ -237,6 +247,24 @@ def absent(
 
     host
         The network/host that the grant should apply to
+
+    grant_option
+        Whether the grant was added WITH GRANT OPTION. Default is ``False``
+
+    escape
+        Escape the MySQL wildcard characters ``_`` and ``%`` in the database
+        name of database-level grants (``db.*``). Default is ``True``
+        Make sure to use the same value the grant was added with, otherwise
+        the stored grant will not match and the revocation fails.
+
+        MySQL usually interprets these characters as wildcards, meaning
+        unescaped grants apply to all databases matching the pattern, while
+        escaped ones only apply to the literal database name.
+
+        .. note::
+            On MySQL servers with ``partial_revokes`` enabled, database names
+            in grants are always interpreted literally and escaped grants
+            fail to match the intended database. Set this to ``False`` there.
     """
     ret = {"name": name, "changes": {}, "result": True, "comment": ""}
 
